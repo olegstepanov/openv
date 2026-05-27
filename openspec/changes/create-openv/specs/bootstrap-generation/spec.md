@@ -44,10 +44,6 @@ When run on a new machine, the generated script SHALL detect the platform's pack
 - **WHEN** the script runs on OpenWRT with opkg
 - **THEN** it runs `opkg install git python3 python3-pip`
 
-#### Scenario: Installs prerequisites on Arch
-- **WHEN** the script runs on Arch Linux with pacman
-- **THEN** it runs `pacman -S --noconfirm git python` (pip is bundled with Arch's Python)
-
 #### Scenario: Unknown package manager
 - **WHEN** the script cannot detect a known package manager
 - **THEN** it prints a human-readable error listing the required prerequisites and exits

@@ -1,6 +1,6 @@
 ## Context
 
-openv is a greenfield project with no existing codebase. The primary constraint is broad platform support: macOS, mainstream Linux distros, Raspbian, and OpenWRT (busybox ash, opkg, constrained flash). The two-repository model (openv tool + user dotfiles) means the tool must work with any compliant dotfiles repo, not just the author's.
+openv is a greenfield project with no existing codebase. The primary constraint is broad platform support: macOS (brew), Debian-based Linux including Raspbian (apt), and OpenWRT (busybox ash, opkg, constrained flash). The two-repository model (openv tool + user dotfiles) means the tool must work with any compliant dotfiles repo, not just the author's.
 
 ## Goals / Non-Goals
 
@@ -49,9 +49,13 @@ The "stow if available, fallback otherwise" approach was considered and rejected
 
 **Alternative considered**: Call GNU stow when on PATH, Python fallback otherwise. Rejected: two code paths, same-result requirement, no real benefit over pure Python.
 
-### 5. Shebang inference for tool dependencies
+### 5. Shebang inference via an extensible interpreter→package mapping
 
-Rather than requiring a manifest to declare "this tool needs bash", openv reads the first line of `install.sh` and `post-install.sh`. If the shebang names a tool in the dotfiles repo (e.g. `#!/bin/bash` → `bash`), that tool is added as a dependency automatically. This keeps the convention-only model while handling real dependency needs.
+openv reads the shebang of `install.sh` and `post-install.sh` and looks up the interpreter name in an internal mapping of recognised interpreters to package names. If the interpreter is in the mapping, openv ensures that package is installed before executing the script. No tool directory is required in the dotfiles repo — these are direct package dependencies. Both `#!/bin/bash` and `#!/bin/env bash` are recognised.
+
+Only bash is supported in v1, but adding more tools (zsh, fish, python) should be easy.
+
+This keeps the model simple for v1 while making the common case (bash scripts on systems where bash may not be the default shell) work correctly out of the box.
 
 ### 6. OPENV_VERSION pinned at generation time in bootstrap script
 
@@ -66,7 +70,12 @@ Users who want to upgrade can regenerate the bootstrap script with a newer openv
 - **pip availability**: pip is sometimes a separate package (python3-pip on apt/opkg). Mitigation: bootstrap.sh installs it explicitly via platform-specific package names.
 - **Circular dependency detection**: A dotfiles repo with circular shebang deps (bash depends on zsh which depends on bash) would loop infinitely without detection. Mitigation: topological sort must raise a clear error on cycles.
 
-## Open Questions
+## Decisions (continued)
 
-- Should `openv install` present the interactive selector every time, or only on first run? (Currently: always interactive, user picks tools each time.)
-- Should failed tool installations abort the entire run or continue with remaining tools?
+### 7. Interactive selector runs every time
+
+`openv install` always presents the tool selector, even on machines that have been partially configured. This lets the user choose a different subset of tools on each run without needing a separate flag or saved state.
+
+### 8. Failed tool installation aborts the run
+
+If any step in a tool's install sequence fails (package install, script, or symlinking), openv halts immediately and reports the error. Partial installs are left as-is for the user to inspect. This avoids silently applying an incomplete environment and makes failures obvious.

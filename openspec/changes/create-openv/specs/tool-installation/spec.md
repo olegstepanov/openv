@@ -1,14 +1,22 @@
 ## ADDED Requirements
 
 ### Requirement: Tool installation follows a fixed four-step sequence
-For each selected tool, openv SHALL execute steps in order: (1) install package, (2) run install.sh, (3) stow configs, (4) run post-install.sh. Steps with no corresponding content are skipped silently.
+For each selected tool, after installing dependencies, openv SHALL execute steps in order: (1) install package, (2) run install.sh, (3) stow configs, (4) run post-install.sh. Steps with no corresponding content are skipped silently.
 
 #### Scenario: Full install with all steps
 - **WHEN** a tool has install.sh, config files, and post-install.sh
 - **THEN** openv installs the package, runs install.sh, stows configs, then runs post-install.sh in that order
 
+#### Scenario: Tool with only config files
+- **WHEN** a tool directory contains config files but no `install.sh` or `post-install.sh`
+- **THEN** openv installs the package and links the configs without running any scripts
+
+#### Scenario: Tool with only scripts
+- **WHEN** a tool directory contains `install.sh` but no config files
+- **THEN** openv installs the package and runs the script without attempting to link any configs
+
 #### Scenario: Step is skipped when not present
-- **WHEN** a tool has no post-install.sh
+- **WHEN** a tool has no `post-install.sh`
 - **THEN** openv completes install without running post-install.sh and does not error
 
 ### Requirement: Config linking uses Python symlink manager on all platforms
@@ -39,6 +47,10 @@ openv SHALL skip package installation for a tool if the package is already insta
 #### Scenario: Package already installed
 - **WHEN** `zsh` is already installed
 - **THEN** openv skips the package install step for the `zsh` tool and proceeds to scripts and stowing
+
+#### Scenario: Package not found aborts the run
+- **WHEN** the package manager reports no package matching the tool name
+- **THEN** openv aborts immediately with an error and does not proceed to scripts or stowing
 
 ### Requirement: Config stowing is idempotent by default
 openv SHALL skip stowing for a tool if all expected symlinks already exist and point to the correct targets. When `--force` is passed, openv SHALL re-stow regardless.

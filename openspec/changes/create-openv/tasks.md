@@ -7,7 +7,7 @@
 
 ## 2. Platform Detection
 
-- [ ] 2.1 Implement `platforms.py`: detect package manager from PATH (brew, apt-get, pacman, opkg)
+- [ ] 2.1 Implement `platforms.py`: detect package manager from PATH (brew, apt-get, opkg)
 - [ ] 2.2 Implement `install_package(name)` per platform, skipping if already installed
 - [ ] 2.3 Implement `install_packages(names)` for installing the prerequisite list (git, python3, pip) with platform-specific package names
 

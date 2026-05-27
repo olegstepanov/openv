@@ -28,5 +28,5 @@ Setting up a new machine requires manually installing tools, copying config file
 - New Python package `openv` (PyPI), Python 3.11+ required
 - New POSIX sh `bootstrap.sh` template embedded in the package
 - Depends on: `questionary` or `rich` for interactive UI; standard library only for core logic
-- Platform targets: macOS, Debian/Ubuntu, Arch, Raspbian, OpenWRT (busybox ash + opkg)
+- Platform targets: macOS (brew), Debian-based Linux including Raspbian (apt), OpenWRT (opkg)
 - No existing code affected — this is a greenfield project

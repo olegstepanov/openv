@@ -7,31 +7,33 @@ openv SHALL treat the package with the same name as the tool directory as an imp
 - **WHEN** a tool named `zsh` is selected
 - **THEN** openv ensures the `zsh` package is installed before running any of the tool's scripts
 
-### Requirement: Shebang lines in scripts infer tool dependencies
-openv SHALL read the shebang line of `install.sh` and `post-install.sh` for each tool. If the shebang names an interpreter that matches a tool name in the dotfiles repo, that tool is added as a dependency.
+### Requirement: Recognised shebang interpreters infer package dependencies
+openv SHALL maintain an internal mapping of interpreter names to package names. When reading the shebang of `install.sh` or `post-install.sh`, openv SHALL extract the interpreter name and look it up in this mapping. If found, openv SHALL ensure the corresponding package is installed before executing the script. No tool directory for the interpreter is required in the dotfiles repo. Interpreters not present in the mapping are ignored.
 
-#### Scenario: bash shebang infers bash dependency
-- **WHEN** `install.sh` begins with `#!/bin/bash` and a `bash` tool exists in the dotfiles repo
-- **THEN** the `bash` tool is added as a dependency and installed before the tool with the shebang
+The mapping in v1 contains one entry: `bash → bash`. New interpreters can be added to the mapping without structural changes.
 
-#### Scenario: sh shebang infers no tool dependency
-- **WHEN** `install.sh` begins with `#!/bin/sh`
-- **THEN** no tool dependency is inferred, since `sh` is a POSIX primitive not a managed tool
+#### Scenario: Recognised interpreter triggers package install
+- **WHEN** `install.sh` begins with `#!/bin/bash`
+- **THEN** openv installs the `bash` package (if not already installed) before running the script
+
+#### Scenario: env-style shebang is also parsed
+- **WHEN** `install.sh` begins with `#!/usr/bin/env bash`
+- **THEN** openv extracts `bash`, finds it in the mapping, and installs the `bash` package
+
+#### Scenario: Unrecognised interpreter infers no dependency
+- **WHEN** `install.sh` begins with `#!/bin/sh` or `#!/usr/bin/env python3`
+- **THEN** openv infers no package dependency and runs the script as-is
 
 #### Scenario: No shebang infers no dependency
 - **WHEN** `install.sh` has no shebang line
-- **THEN** no tool dependency is inferred
-
-#### Scenario: Shebang tool not in dotfiles repo
-- **WHEN** `install.sh` begins with `#!/usr/bin/env python3` but no `python3` tool exists in the dotfiles repo
-- **THEN** no tool dependency is inferred (interpreter is assumed to be a system tool)
+- **THEN** openv infers no package dependency
 
 ### Requirement: Dependencies are resolved into a topological install order
 openv SHALL compute a valid topological ordering of selected tools such that each tool is installed only after all its dependencies. Dependencies not explicitly selected by the user but required by selected tools SHALL be installed automatically.
 
 #### Scenario: Dependency installed before dependent
-- **WHEN** `zsh` depends on `bash` and the user selects `zsh`
-- **THEN** openv installs `bash` before `zsh`, even if the user did not select `bash`
+- **WHEN** `delta` tool depends on `git` tool and the user selects `delta`
+- **THEN** openv installs `git` before `delta`, even if the user did not select `git`
 
 #### Scenario: Independent tools have no required order
 - **WHEN** `git` and `vim` have no dependencies on each other
