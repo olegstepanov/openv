@@ -57,15 +57,15 @@ openv SHALL skip stowing for a tool if all expected symlinks already exist and p
 
 #### Scenario: All symlinks already valid
 - **WHEN** all config symlinks for a tool exist and point to the correct files
-- **THEN** openv skips stowing that tool's configs
+- **THEN** openv skips installing tool: scripts are not run, configs are not re-stowed
 
 #### Scenario: Partial stow — some symlinks missing
 - **WHEN** some but not all symlinks for a tool are present
-- **THEN** openv proceeds with stowing (creates missing symlinks)
+- **THEN** openv runs `install.sh` script, stows configs (creates missing symlinks), then runs `post-install.sh` 
 
 #### Scenario: Force re-stow
 - **WHEN** all symlinks are valid but `--force` flag is passed
-- **THEN** openv re-stows the tool's configs, replacing existing symlinks
+- **THEN** openv re-stows the tool's configs, replacing existing symlinks and runs both scripts
 
 ### Requirement: Package installed but configs not stowed proceeds normally
 openv SHALL run install.sh, stow configs, and run post-install.sh even if the package is already installed, as long as configs have not yet been stowed.

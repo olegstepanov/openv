@@ -7,10 +7,6 @@
 - **WHEN** user runs `openv generate-bootstrap --dotfiles https://github.com/user/dotfiles`
 - **THEN** a complete, executable sh script is written to stdout
 
-#### Scenario: Script can be redirected to a file
-- **WHEN** user runs `openv generate-bootstrap --dotfiles URL > bootstrap.sh`
-- **THEN** bootstrap.sh is a valid, standalone script that can be hosted on any server
-
 ### Requirement: Generated script pins the openv version that created it
 The generated script SHALL include `OPENV_VERSION="<version>"` as a variable at the top of the file, where `<version>` is the version of openv that ran `generate-bootstrap`. The script SHALL use this variable when installing openv via pip.
 
@@ -57,7 +53,7 @@ After installing prerequisites and openv, the generated script SHALL clone the d
 
 #### Scenario: Dotfiles directory already exists
 - **WHEN** `$HOME/.openv` already exists when the script runs
-- **THEN** the script skips cloning and proceeds directly to `openv install`
+- **THEN** the script exits with clear error
 
 ### Requirement: openv install uses ~/.openv as default dotfiles location
 `openv install` (with no `--dotfiles` argument) SHALL default to `$HOME/.openv` as the dotfiles root.
