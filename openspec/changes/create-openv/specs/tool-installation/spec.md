@@ -1,11 +1,11 @@
 ## ADDED Requirements
 
 ### Requirement: Tool installation follows a fixed four-step sequence
-For each selected tool, after installing dependencies, openv SHALL execute steps in order: (1) install package, (2) run install.sh, (3) stow configs, (4) run post-install.sh. Steps with no corresponding content are skipped silently.
+For each selected tool, after installing dependencies, openv SHALL execute steps in order: (1) install package, (2) run install.sh, (3) link configs, (4) run post-install.sh. Steps with no corresponding content are skipped silently.
 
 #### Scenario: Full install with all steps
 - **WHEN** a tool has install.sh, config files, and post-install.sh
-- **THEN** openv installs the package, runs install.sh, stows configs, then runs post-install.sh in that order
+- **THEN** openv installs the package, runs install.sh, links configs, then runs post-install.sh in that order
 
 #### Scenario: Tool with only config files
 - **WHEN** a tool directory contains config files but no `install.sh` or `post-install.sh`
@@ -15,7 +15,7 @@ For each selected tool, after installing dependencies, openv SHALL execute steps
 - **WHEN** a tool directory contains `install.sh` but no config files
 - **THEN** openv installs the package and runs the script without attempting to link any configs
 
-#### Scenario: Step is skipped when not present
+#### Scenario: `post-install.sh` is skipped when not present
 - **WHEN** a tool has no `post-install.sh`
 - **THEN** openv completes install without running post-install.sh and does not error
 
@@ -34,8 +34,8 @@ openv SHALL deploy tool configs using a Python symlink manager: for each file in
 - **WHEN** openv runs on macOS, Linux, or OpenWRT
 - **THEN** the symlink structure produced is identical
 
-### Requirement: install.sh and post-install.sh are excluded from stowing
-openv SHALL NOT create symlinks for `install.sh` or `post-install.sh` when stowing a tool's configs.
+### Requirement: install.sh and post-install.sh are excluded from linking
+openv SHALL NOT create symlinks for `install.sh` or `post-install.sh` when linking a tool's configs.
 
 #### Scenario: Scripts not symlinked
 - **WHEN** a tool directory contains `install.sh`, `post-install.sh`, and `.zshrc`
@@ -46,35 +46,35 @@ openv SHALL skip package installation for a tool if the package is already insta
 
 #### Scenario: Package already installed
 - **WHEN** `zsh` is already installed
-- **THEN** openv skips the package install step for the `zsh` tool and proceeds to scripts and stowing
+- **THEN** openv skips the package install step for the `zsh` tool and proceeds to scripts and linking
 
 #### Scenario: Package not found aborts the run
 - **WHEN** the package manager reports no package matching the tool name
-- **THEN** openv aborts immediately with an error and does not proceed to scripts or stowing
+- **THEN** openv aborts immediately with an error and does not proceed to scripts or linking
 
-### Requirement: Config stowing is idempotent by default
-openv SHALL skip stowing for a tool if all expected symlinks already exist and point to the correct targets. When `--force` is passed, openv SHALL re-stow regardless.
+### Requirement: Config linking is idempotent by default
+openv SHALL skip the entire tool installation — package install, scripts, and config linking — if all expected config symlinks already exist and point to the correct targets. When `--force` is passed, openv SHALL re-link configs and re-run scripts regardless.
 
 #### Scenario: All symlinks already valid
 - **WHEN** all config symlinks for a tool exist and point to the correct files
-- **THEN** openv skips installing tool: scripts are not run, configs are not re-stowed
+- **THEN** openv skips the tool entirely: scripts are not run, configs are not re-linked
 
-#### Scenario: Partial stow — some symlinks missing
+#### Scenario: Partial link — some symlinks missing
 - **WHEN** some but not all symlinks for a tool are present
-- **THEN** openv runs `install.sh` script, stows configs (creates missing symlinks), then runs `post-install.sh` 
+- **THEN** openv runs `install.sh`, links configs (creates missing symlinks), then runs `post-install.sh`
 
-#### Scenario: Force re-stow
+#### Scenario: Force re-link
 - **WHEN** all symlinks are valid but `--force` flag is passed
-- **THEN** openv re-stows the tool's configs, replacing existing symlinks and runs both scripts
+- **THEN** openv re-links the tool's configs, replacing existing symlinks, and re-runs both scripts
 
-### Requirement: Package installed but configs not stowed proceeds normally
-openv SHALL run install.sh, stow configs, and run post-install.sh even if the package is already installed, as long as configs have not yet been stowed.
+### Requirement: Pre-existing package installation is handled gracefully
+openv SHALL proceed with scripts and config linking even if the tool's package was already present on the system before openv ran — whether installed by the OS, the user, or another tool.
 
-#### Scenario: Package present, configs absent
-- **WHEN** the tool's package is installed but no config symlinks exist
-- **THEN** openv skips package installation and proceeds with scripts and stowing
+#### Scenario: Package pre-installed, configs absent
+- **WHEN** the tool's package is already installed but no config symlinks exist
+- **THEN** openv skips package installation and proceeds with scripts and linking
 
-### Requirement: scripts are executed with their declared interpreter
+### Requirement: Scripts are executed with their declared interpreter
 openv SHALL execute `install.sh` and `post-install.sh` using the interpreter declared in their shebang line. If no shebang is present, the script SHALL be executed with `/bin/sh`.
 
 #### Scenario: Script with bash shebang

@@ -17,9 +17,9 @@ openv SHALL enumerate tools by listing non-hidden directories at the root of the
 
 ### Requirement: Tool directory structure is well-defined
 Each tool directory SHALL contain any combination of the following, all optional:
-- `install.sh` — run before config stowing; may have any valid shebang
-- `post-install.sh` — run after config stowing; may have any valid shebang
-- Any other files or subdirectories — treated as config files to be stowed
+- `install.sh` — run before config linking; may have any valid shebang
+- `post-install.sh` — run after config linking; may have any valid shebang
+- Any other files or subdirectories — treated as config files to be linked
 
 #### Scenario: install.sh is identified as the pre-install script
 - **WHEN** a tool directory contains a file named `install.sh`

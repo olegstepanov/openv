@@ -29,11 +29,19 @@ The mapping in v1 contains one entry: `bash → bash`. New interpreters can be a
 - **THEN** openv infers no package dependency
 
 ### Requirement: Dependencies are resolved into a topological install order
-openv SHALL compute a valid topological ordering of selected tools such that each tool is installed only after all its dependencies. Dependencies not explicitly selected by the user but required by selected tools SHALL be installed automatically.
+openv SHALL compute a valid topological ordering of selected tools such that each tool is installed only after all its dependencies. When a dependency is not explicitly selected by the user, openv SHALL install it automatically: running scripts and linking configs if the dependency has a tool directory in the dotfiles repo, or installing only the package if it does not. If the dependency package cannot be installed, the entire run is aborted.
 
-#### Scenario: Dependency installed before dependent
-- **WHEN** `delta` tool depends on `git` tool and the user selects `delta`
-- **THEN** openv installs `git` before `delta`, even if the user did not select `git`
+#### Scenario: Dependency with tool directory is fully installed
+- **WHEN** `delta` depends on `git` and `git` has a tool directory in the dotfiles repo
+- **THEN** openv runs git's full install sequence (package + scripts + configs) before installing `delta`
+
+#### Scenario: Dependency without tool directory installs package only
+- **WHEN** a script shebang requires `bash` and there is no `bash` tool directory in the dotfiles repo
+- **THEN** openv installs only the `bash` package before running the script
+
+#### Scenario: Unresolvable dependency aborts the run
+- **WHEN** a required dependency package cannot be installed by the package manager
+- **THEN** openv aborts with an error before installing any further tools
 
 #### Scenario: Independent tools have no required order
 - **WHEN** `git` and `vim` have no dependencies on each other
