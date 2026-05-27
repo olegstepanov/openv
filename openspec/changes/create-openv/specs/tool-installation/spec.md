@@ -11,20 +11,20 @@ For each selected tool, openv SHALL execute steps in order: (1) install package,
 - **WHEN** a tool has no post-install.sh
 - **THEN** openv completes install without running post-install.sh and does not error
 
-### Requirement: Config stowing uses GNU stow when available, Python fallback otherwise
-openv SHALL use `stow` (GNU stow) if it is present on PATH to create symlinks from the tool directory to `$HOME`. When stow is not available, openv SHALL use a Python implementation that produces identical results: for each file in the tool directory (excluding install.sh and post-install.sh), create a symlink at the corresponding path under `$HOME`, creating intermediate directories as needed.
+### Requirement: Config linking uses Python symlink manager on all platforms
+openv SHALL deploy tool configs using a Python symlink manager: for each file in the tool directory (excluding `install.sh` and `post-install.sh`), create a symlink at the corresponding path under `$HOME`, creating intermediate directories as needed. This implementation is used on all platforms; GNU stow is not used.
 
-#### Scenario: stow is available
-- **WHEN** `stow` is on PATH
-- **THEN** openv invokes stow to link the tool directory into `$HOME`
-
-#### Scenario: stow is not available (e.g. OpenWRT)
-- **WHEN** `stow` is not on PATH
-- **THEN** openv uses Python symlink fallback and produces the same symlink structure
+#### Scenario: Config file is symlinked into $HOME
+- **WHEN** a tool directory contains `.zshrc`
+- **THEN** openv creates a symlink at `$HOME/.zshrc` pointing to the file in the tool directory
 
 #### Scenario: Intermediate directories are created
 - **WHEN** a config file lives at `.config/nvim/init.vim` within the tool directory
 - **THEN** openv creates `$HOME/.config/nvim/` if it does not exist, then creates the symlink
+
+#### Scenario: Behavior is identical on all platforms
+- **WHEN** openv runs on macOS, Linux, or OpenWRT
+- **THEN** the symlink structure produced is identical
 
 ### Requirement: install.sh and post-install.sh are excluded from stowing
 openv SHALL NOT create symlinks for `install.sh` or `post-install.sh` when stowing a tool's configs.

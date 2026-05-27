@@ -25,11 +25,9 @@
 
 ## 5. Stow / Symlink
 
-- [ ] 5.1 Implement `stow.py`: check if GNU stow is on PATH
-- [ ] 5.2 Implement stow invocation path (call stow with correct `-d` / `-t` arguments)
-- [ ] 5.3 Implement Python symlink fallback: walk tool dir, skip install.sh/post-install.sh, create symlinks under `$HOME` with intermediate directory creation
-- [ ] 5.4 Implement idempotency check: verify all expected symlinks exist and point to correct targets
-- [ ] 5.5 Implement `--force` re-stow: remove and recreate existing symlinks
+- [ ] 5.1 Implement `stow.py`: walk tool dir, skip install.sh/post-install.sh, create symlinks under `$HOME` with intermediate directory creation
+- [ ] 5.2 Implement idempotency check: verify all expected symlinks exist and point to correct targets
+- [ ] 5.3 Implement `--force` re-link: remove and recreate existing symlinks
 
 ## 6. Tool Installer Orchestration
 

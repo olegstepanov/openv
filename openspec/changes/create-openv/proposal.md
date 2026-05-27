@@ -7,7 +7,7 @@ Setting up a new machine requires manually installing tools, copying config file
 - New pip-installable CLI tool `openv` with two subcommands: `install` and `generate-bootstrap`
 - Convention-based dotfiles repository format: each top-level directory is a tool, containing its config files plus optional `install.sh` / `post-install.sh` scripts
 - Automatic package installation via the platform's native package manager (brew, apt, pacman, opkg)
-- Config deployment via GNU stow with a pure-Python symlink fallback for systems without stow (e.g. OpenWRT)
+- Config deployment via a Python symlink manager: mirrors tool directory structure under `$HOME`, consistent across all platforms
 - `generate-bootstrap` produces a self-contained POSIX sh script that can be hosted anywhere and piped into `sh` on a fresh machine
 - Dependency resolution: tools declare implicit deps (same-name package) and inferred deps (shebang of install scripts)
 - Idempotent installs: already-installed packages and already-stowed configs are skipped unless `--force` is passed

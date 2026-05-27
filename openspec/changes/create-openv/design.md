@@ -21,7 +21,7 @@ openv is a greenfield project with no existing codebase. The primary constraint 
 
 ### 1. Python 3.11+ for core logic; POSIX sh only for bootstrap preamble
 
-Python handles tool discovery, dependency resolution, interactive UI, and stow fallback cleanly. POSIX sh is limited on OpenWRT (busybox ash: no arrays, no `[[`, limited string ops) and would make these components fragile.
+Python handles tool discovery, dependency resolution, interactive UI, and config symlinking cleanly. POSIX sh is limited on OpenWRT (busybox ash: no arrays, no `[[`, limited string ops) and would make these components fragile.
 
 The bootstrap preamble must remain POSIX sh because Python isn't yet installed when it runs. It does only three things — detect the package manager, install prerequisites, and hand off to Python — which is well within POSIX sh's capabilities.
 
@@ -41,11 +41,13 @@ The tradeoff is that package names differing across platforms (e.g. `neovim` vs 
 
 **Alternative considered**: `tool.yaml` manifest per tool. Deferred to v2.
 
-### 4. GNU stow when available; Python symlink fallback otherwise
+### 4. Python-only symlink manager; no GNU stow dependency
 
-stow is the canonical dotfiles symlink manager but is absent from OpenWRT's opkg. Rather than depending on stow everywhere, openv calls `stow` when it's on PATH and falls back to a Python implementation (`os.symlink` + `pathlib`) that replicates the same behavior: walk tool directory, mirror structure under `$HOME`, create symlinks.
+openv manages config symlinks entirely in Python (`os.symlink` + `pathlib`): walk the tool directory, mirror its structure under `$HOME`, create symlinks, create intermediate directories as needed. stow is not used.
 
-Both paths must produce identical results — the stow fallback is not a degraded mode.
+The "stow if available, fallback otherwise" approach was considered and rejected: it produces two code paths that must remain identical, makes debugging ambiguous ("did stow or Python run this?"), and adds an external dependency that is absent on OpenWRT anyway. The Python implementation is simple (~20 lines), covers all required behavior, and is consistent across every platform.
+
+**Alternative considered**: Call GNU stow when on PATH, Python fallback otherwise. Rejected: two code paths, same-result requirement, no real benefit over pure Python.
 
 ### 5. Shebang inference for tool dependencies
 
