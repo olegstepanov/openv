@@ -50,8 +50,8 @@
 ## 9. Bootstrap Script Template
 
 - [ ] 9.1 Write `bootstrap.sh.template`: POSIX sh, variables at top (`OPENV_VERSION`, `DOTFILES_URL`), package manager detection function
-- [ ] 9.2 Implement prerequisites installation in template: platform-aware install of git + python3 + pip (python3-pip on apt/opkg, bundled on brew/pacman)
-- [ ] 9.3 Implement dotfiles clone step in template: skip if `$HOME/.openv` already exists
+- [ ] 9.2 Implement prerequisites installation in template: platform-aware install of git + python3 + pip (python3-pip on apt/opkg, bundled with brew's Python)
+- [ ] 9.3 Implement dotfiles clone step in template: abort with clear error if `$HOME/.openv` already exists
 - [ ] 9.4 Implement pip install + openv invocation in template
 - [ ] 9.5 Validate generated script syntax with `sh -n bootstrap.sh`; manually verify on macOS, Ubuntu, and OpenWRT before v1 release
 
