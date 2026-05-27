@@ -53,13 +53,15 @@
 - [ ] 9.2 Implement prerequisites installation in template: platform-aware install of git + python3 + pip (python3-pip on apt/opkg, bundled on brew/pacman)
 - [ ] 9.3 Implement dotfiles clone step in template: skip if `$HOME/.openv` already exists
 - [ ] 9.4 Implement pip install + openv invocation in template
-- [ ] 9.5 Test generated script on macOS (brew), Ubuntu (apt), and OpenWRT (opkg) — fix any busybox ash incompatibilities
+- [ ] 9.5 Validate generated script syntax with `sh -n bootstrap.sh`; manually verify on macOS, Ubuntu, and OpenWRT before v1 release
 
-## 10. Tests
+## 10. Unit & Integration Tests
+
+<!-- E2E tests (multi-platform via Docker/QEMU/self-hosted runners) are deferred to v2 -->
 
 - [ ] 10.1 Unit test: tool discovery (hidden dirs ignored, files ignored, tool list correct)
 - [ ] 10.2 Unit test: shebang parser (various shebangs, missing shebang, non-tool interpreter)
 - [ ] 10.3 Unit test: topological sort (correct order, cycle detection error)
-- [ ] 10.4 Unit test: symlink fallback (correct paths, intermediate dirs, skips scripts)
-- [ ] 10.5 Unit test: idempotency checks (all symlinks valid → skip, partial → proceed)
-- [ ] 10.6 Integration test: `openv install` on a temp dotfiles dir with a minimal tool
+- [ ] 10.4 Unit test: symlink manager (correct paths, intermediate dirs, skips scripts)
+- [ ] 10.5 Unit test: idempotency checks (all symlinks valid → skip entire tool, partial → proceed)
+- [ ] 10.6 Integration test: `openv install` on a temp dotfiles dir with mocked package manager

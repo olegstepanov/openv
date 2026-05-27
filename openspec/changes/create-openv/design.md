@@ -79,3 +79,12 @@ Users who want to upgrade can regenerate the bootstrap script with a newer openv
 ### 8. Failed tool installation aborts the run
 
 If any step in a tool's install sequence fails (package install, script, or symlinking), openv halts immediately and reports the error. Partial installs are left as-is for the user to inspect. This avoids silently applying an incomplete environment and makes failures obvious.
+
+### 9. E2E tests deferred to v2; unit and integration tests only in v1
+
+v1 ships with unit tests (pure logic: discovery, shebang parsing, dependency resolution, symlink manager, idempotency) and one integration test (`openv install` on a temp dotfiles dir with a mocked package manager). Multi-platform E2E tests are deferred.
+
+Planned v2 approach:
+- **Debian/Ubuntu**: Docker container from scratch (`debian:bookworm`) — trivial, cheap, high fidelity
+- **macOS**: self-hosted GitHub Actions runner on a Mac — no virtualization needed, no extra cost
+- **OpenWRT**: start with `openwrtorg/rootfs` Docker image (opkg + busybox userspace, no real kernel); upgrade to full QEMU boot with official x86_64 images if gaps are found
