@@ -47,10 +47,6 @@ select = [
     "PTH", # flake8-use-pathlib
     "RUF", # Ruff-specific rules
 ]
-ignore = [
-    "S603", # subprocess call with untrusted input — intentional: we invoke known package managers
-    "S607", # partial executable path — intentional: brew/apt-get/opkg are on PATH by design
-]
 
 [tool.ruff.lint.isort]
 known-first-party = ["openv"]

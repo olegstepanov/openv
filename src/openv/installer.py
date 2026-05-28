@@ -10,7 +10,7 @@ from .stow import all_links_valid, stow
 
 def _run_script(script: Path) -> None:
     """Execute a script using its declared shebang interpreter, or /bin/sh."""
-    subprocess.run([str(script)], check=True)
+    subprocess.run([str(script)], check=True)  # noqa: S603
 
 
 def is_installed(

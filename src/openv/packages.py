@@ -26,21 +26,21 @@ def detect() -> PackageManager:
 def is_installed(pm: PackageManager, package: str) -> bool:
     match pm:
         case PackageManager.BREW:
-            result = subprocess.run(
-                ["brew", "list", "--formula", package],
+            result = subprocess.run(  # noqa: S603
+                ["brew", "list", "--formula", package],  # noqa: S607
                 capture_output=True,
             )
             return result.returncode == 0
         case PackageManager.APT:
-            result = subprocess.run(
-                ["dpkg-query", "-W", "-f=${Status}", package],
+            result = subprocess.run(  # noqa: S603
+                ["dpkg-query", "-W", "-f=${Status}", package],  # noqa: S607
                 capture_output=True,
                 text=True,
             )
             return result.returncode == 0 and "install ok installed" in result.stdout
         case PackageManager.OPKG:
-            result = subprocess.run(
-                ["opkg", "status", package],
+            result = subprocess.run(  # noqa: S603
+                ["opkg", "status", package],  # noqa: S607
                 capture_output=True,
                 text=True,
             )
@@ -56,10 +56,10 @@ def install_package(pm: PackageManager, package: str) -> None:
     try:
         match pm:
             case PackageManager.BREW:
-                subprocess.run(["brew", "install", package], check=True)
+                subprocess.run(["brew", "install", package], check=True)  # noqa: S603, S607
             case PackageManager.APT:
-                subprocess.run(["apt-get", "install", "-y", package], check=True)
+                subprocess.run(["apt-get", "install", "-y", package], check=True)  # noqa: S603, S607
             case PackageManager.OPKG:
-                subprocess.run(["opkg", "install", package], check=True)
+                subprocess.run(["opkg", "install", package], check=True)  # noqa: S603, S607
     except subprocess.CalledProcessError as e:
         raise InstallationError(package) from e
