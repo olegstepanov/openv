@@ -10,10 +10,15 @@ from openv.packages import detect
 from openv.selector import select_tools
 
 
-def _cmd_install(args: argparse.Namespace) -> None:
-    dotfiles = Path(args.dotfiles).expanduser()
+class _Args(argparse.Namespace):
+    command: str = ""
+    dotfiles: str = ""
+    force: bool = False
+    tools: list[str] = []  # noqa: RUF012
+
+
+def _cmd_install(dotfiles: Path, force: bool, tool_names: list[str]) -> None:
     home = Path.home()
-    force = args.force
     pm = detect()
 
     tools = discover(dotfiles)
@@ -21,8 +26,8 @@ def _cmd_install(args: argparse.Namespace) -> None:
         print("No tools found in", dotfiles)
         return
 
-    if args.tools:
-        selected_names = list(args.tools)
+    if tool_names:
+        selected_names = tool_names
     else:
         selected_names = select_tools(tools.values(), pm, home)
         if not selected_names:
@@ -33,13 +38,13 @@ def _cmd_install(args: argparse.Namespace) -> None:
     install_tools(selected_tools, pm, home, force=force)
 
 
-def _cmd_generate_bootstrap(args: argparse.Namespace) -> None:
+def _cmd_generate_bootstrap(dotfiles_url: str) -> None:
     template = (
         importlib.resources.files("openv").joinpath("bootstrap.sh.template").read_text()
     )
     version = importlib.metadata.version("openv")
     output = template.replace("{{OPENV_VERSION}}", version)
-    output = output.replace("{{DOTFILES_URL}}", args.dotfiles)
+    output = output.replace("{{DOTFILES_URL}}", dotfiles_url)
     sys.stdout.write(output)
 
 
@@ -70,9 +75,13 @@ def main() -> None:
         "--dotfiles", required=True, help="URL of the dotfiles repository"
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(namespace=_Args())
 
     if args.command == "install":
-        _cmd_install(args)
+        _cmd_install(
+            dotfiles=Path(args.dotfiles).expanduser(),
+            force=args.force,
+            tool_names=args.tools,
+        )
     elif args.command == "generate-bootstrap":
-        _cmd_generate_bootstrap(args)
+        _cmd_generate_bootstrap(dotfiles_url=args.dotfiles)

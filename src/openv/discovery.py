@@ -22,7 +22,7 @@ class ToolInfo:
 
 
 def discover(dotfiles_root: Path) -> dict[str, ToolInfo]:
-    tools = {}
+    tools: dict[str, ToolInfo] = {}
     for entry in dotfiles_root.iterdir():
         if not entry.is_dir():
             continue

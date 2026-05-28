@@ -18,24 +18,16 @@ if TYPE_CHECKING:
 def _tool_status(tool: ToolInfo, home: Path) -> str:
     if all_links_valid(tool, home):
         return "installed"
-    config_count = len(tool.config_files)
-    if config_count == 0:
+    if not tool.config_files:
         return "no configs"
     return "partial"
-
-
-def _is_partial(tool: ToolInfo, home: Path) -> bool:
-    if not tool.config_files:
-        return False
-    valid = all_links_valid(tool, home)
-    return not valid
 
 
 def select_tools(
     tools: Iterable[ToolInfo], pm: PackageManager, home: Path
 ) -> list[str]:
     """Show an interactive checkbox selector; return selected tool names."""
-    choices = []
+    choices: list[questionary.Choice] = []
     for tool in tools:
         status = _tool_status(tool, home)
         label = f"{tool.name}  [{status}]"
@@ -48,7 +40,7 @@ def select_tools(
         )
         choices.append(choice)
 
-    selected = questionary.checkbox(
+    selected: list[str] | None = questionary.checkbox(  # pyright: ignore[reportAny]
         "Select tools to install:",
         choices=choices,
     ).ask()

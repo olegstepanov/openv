@@ -5,7 +5,7 @@ from openv.discovery import ToolInfo
 
 def expected_links(tool: ToolInfo, home: Path) -> list[tuple[Path, Path]]:
     """Return list of (link_path, target_path) for a tool's config files."""
-    links = []
+    links: list[tuple[Path, Path]] = []
     for config_file in tool.config_files:
         rel = config_file.relative_to(tool.directory)
         link_path = home / rel
