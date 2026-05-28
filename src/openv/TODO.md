@@ -1,0 +1,19 @@
+- Check if prerequisites are missing before installing
+- Move argument parsing to main()
+- Move topological sort and pm detectio to install_tools
+- Add short docstrings to modules and functions
+- Put equivalent return path under else
+- Create separate method for extracting dependencies from tool
+- Put dependencies into ToolInfo
+- Centralize information about special files (installation scripts, manifest)
+- GLOBAL: Don't abbreviate names (e.g. dependencies -> deps), except for index variables (i, j, k, _, etc.)
+- GLOBAL: Prefer more descriptive variable names (dependency_graph over graph)
+- GLOBAL: Don't repeat global preferences in local CLAUDE.md
+- GLOBAL: Prefer standard or commonly used libraries over own implementations (like graphlib.TopologicalSorter for topological sort)
+- GLOBAL: Implement/update tests and documentation together with implementation update, do it in the same change
+- GLOBAL: Discuss linter secup for project before starting working on implementation. Find tools for style checks, unused code checks if available. Add selected tools to project. Run installed linters after each change and correct found issues if there are no objections. After than, review all changes once again.
+- GLOBAL: Use tool commands for updating special files (for example, use `uv init` to create pyproject.toml and `uv add` to add dependencies)
+- GLOBAL: Use uv for all Python projects
+- Find tasks that are marked as implemented, but for which code is missing. Check if these tasks really need to be implemented.
+? How to organize global Claude settings to put Python-specific preferences in a separate file to be looked up only for Python projects?
+- PYTHON: Prefer relative imports for local modules

@@ -1,0 +1,65 @@
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from pathlib import Path
+
+from . import dependencies
+
+
+_SCRIPT_NAMES = {"install.sh", "post-install.sh"}
+
+
+@dataclass
+class ToolInfo:
+    name: str
+    directory: Path
+    package_dependencies: list[str] = field(default_factory=list)
+    install_script: Path | None = None
+    post_install_script: Path | None = None
+    config_files: list[Path] = field(default_factory=list)
+
+
+def discover(dotfiles_root: Path) -> dict[str, ToolInfo]:
+    tools = {}
+    for entry in dotfiles_root.iterdir():
+        if not entry.is_dir():
+            continue
+        if entry.name.startswith("."):
+            continue
+        tool = _create_tool_from_directory(entry)
+        assert tool.name not in tools
+        tools[tool.name] = tool
+    return tools
+
+
+def _create_tool_from_directory(directory: Path) -> ToolInfo:
+    def check_script(file_name: str):
+        path = directory / file_name
+        if not path.exists():
+            return None
+        if not path.is_file():
+            raise ValueError(f"Script {path} must either be a file or be absent.")
+        return path
+    
+    install_script = check_script("install.sh")
+    post_install_script = check_script("post-install.sh")
+    config_files = [
+        entry for entry in directory.iterdir() if entry.is_file() and entry.name not in _SCRIPT_NAMES
+    ]
+    
+    # Implicit dependency on package with the same name
+    package_dependencies = {directory.name}
+    package_dependencies.update(
+        dependency
+        for script in [install_script, post_install_script]
+        if script is not None 
+        for dependency in dependencies.get_script_dependencies(script)
+    )
+    return ToolInfo(
+        name=directory.name,
+        directory=directory,
+        package_dependencies=list(package_dependencies),
+        install_script=install_script,
+        post_install_script=post_install_script,
+        config_files=config_files,
+    )
