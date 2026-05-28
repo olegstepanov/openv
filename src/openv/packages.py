@@ -12,22 +12,15 @@ class PackageManager(Enum):
 
 
 class InstallationError(Exception):
-    def __init__(self, package: str, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.package = package
-
-
-    def __str__(self):
-        return f'Error installing package "{self.package}"'
+    def __init__(self, package: str) -> None:
+        super().__init__(f'Error installing package "{package}"')
 
 
 def detect() -> PackageManager:
     for pm in (PackageManager.BREW, PackageManager.APT, PackageManager.OPKG):
         if shutil.which(pm.value):
             return pm
-    raise RuntimeError(
-        "No supported package manager (brew, apt-get or opkg) found. "
-    )
+    raise RuntimeError("No supported package manager (brew, apt-get or opkg) found. ")
 
 
 def is_installed(pm: PackageManager, package: str) -> bool:
@@ -51,7 +44,10 @@ def is_installed(pm: PackageManager, package: str) -> bool:
                 capture_output=True,
                 text=True,
             )
-            return result.returncode == 0 and "Status: install ok installed" in result.stdout
+            return (
+                result.returncode == 0
+                and "Status: install ok installed" in result.stdout
+            )
 
 
 def install_package(pm: PackageManager, package: str) -> None:
@@ -66,4 +62,4 @@ def install_package(pm: PackageManager, package: str) -> None:
             case PackageManager.OPKG:
                 subprocess.run(["opkg", "install", package], check=True)
     except subprocess.CalledProcessError as e:
-        raise InstallationError(package, e)
+        raise InstallationError(package) from e

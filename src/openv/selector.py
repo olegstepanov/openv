@@ -1,14 +1,18 @@
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import questionary
-from typing import Iterable
 
-from .discovery import ToolInfo
 from . import installer
-from .packages import PackageManager
 from .stow import all_links_valid
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from pathlib import Path
+
+    from .discovery import ToolInfo
+    from .packages import PackageManager
 
 
 def _tool_status(tool: ToolInfo, home: Path) -> str:
@@ -27,7 +31,9 @@ def _is_partial(tool: ToolInfo, home: Path) -> bool:
     return not valid
 
 
-def select_tools(tools: Iterable[ToolInfo], pm: PackageManager, home: Path) -> list[str]:
+def select_tools(
+    tools: Iterable[ToolInfo], pm: PackageManager, home: Path
+) -> list[str]:
     """Show an interactive checkbox selector; return selected tool names."""
     choices = []
     for tool in tools:

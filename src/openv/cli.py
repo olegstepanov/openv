@@ -3,6 +3,7 @@ import importlib.metadata
 import importlib.resources
 import sys
 from pathlib import Path
+
 from openv.discovery import discover
 from openv.installer import install_tools
 from openv.packages import detect
@@ -33,7 +34,9 @@ def _cmd_install(args: argparse.Namespace) -> None:
 
 
 def _cmd_generate_bootstrap(args: argparse.Namespace) -> None:
-    template = importlib.resources.files("openv").joinpath("bootstrap.sh.template").read_text()
+    template = (
+        importlib.resources.files("openv").joinpath("bootstrap.sh.template").read_text()
+    )
     version = importlib.metadata.version("openv")
     output = template.replace("{{OPENV_VERSION}}", version)
     output = output.replace("{{DOTFILES_URL}}", args.dotfiles)
@@ -47,17 +50,25 @@ def main() -> None:
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
-    install_p = sub.add_parser("install", help="Install tools from a dotfiles repository")
+    install_p = sub.add_parser(
+        "install", help="Install tools from a dotfiles repository"
+    )
     install_p.add_argument(
         "--dotfiles",
         default="~/.openv",
         help="Path to dotfiles repository root (default: ~/.openv)",
     )
-    install_p.add_argument("--force", action="store_true", help="Re-link configs and re-run scripts")
-    install_p.add_argument("tools", nargs="*", help="Tools to install (skips interactive selector)")
+    install_p.add_argument(
+        "--force", action="store_true", help="Re-link configs and re-run scripts"
+    )
+    install_p.add_argument(
+        "tools", nargs="*", help="Tools to install (skips interactive selector)"
+    )
 
     gen_p = sub.add_parser("generate-bootstrap", help="Generate bootstrap script")
-    gen_p.add_argument("--dotfiles", required=True, help="URL of the dotfiles repository")
+    gen_p.add_argument(
+        "--dotfiles", required=True, help="URL of the dotfiles repository"
+    )
 
     args = parser.parse_args()
 

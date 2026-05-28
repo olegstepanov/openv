@@ -2,9 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from openv.discovery import ToolInfo
-
-
 # Interpreter name -> package name mapping
 _INTERPRETER_PACKAGES: dict[str, str] = {
     "bash": "bash",

@@ -19,3 +19,42 @@ openv = "openv.cli:main"
 [build-system]
 requires = ["uv_build>=0.8.14,<0.9.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.409",
+    "ruff>=0.15.15",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "N",   # pep8-naming
+    "SIM", # flake8-simplify
+    "TCH", # flake8-type-checking
+    "ANN", # flake8-annotations
+    "S",   # flake8-bandit (basic security)
+    "PTH", # flake8-use-pathlib
+    "RUF", # Ruff-specific rules
+]
+ignore = [
+    "S603", # subprocess call with untrusted input — intentional: we invoke known package managers
+    "S607", # partial executable path — intentional: brew/apt-get/opkg are on PATH by design
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["openv"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

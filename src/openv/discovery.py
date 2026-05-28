@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from . import dependencies
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
 _SCRIPT_NAMES = {"install.sh", "post-install.sh"}
 
@@ -27,32 +29,35 @@ def discover(dotfiles_root: Path) -> dict[str, ToolInfo]:
         if entry.name.startswith("."):
             continue
         tool = _create_tool_from_directory(entry)
-        assert tool.name not in tools
+        if tool.name in tools:
+            raise ValueError(f"Duplicate tool name: {tool.name!r}")
         tools[tool.name] = tool
     return tools
 
 
 def _create_tool_from_directory(directory: Path) -> ToolInfo:
-    def check_script(file_name: str):
+    def check_script(file_name: str) -> Path | None:
         path = directory / file_name
         if not path.exists():
             return None
         if not path.is_file():
             raise ValueError(f"Script {path} must either be a file or be absent.")
         return path
-    
+
     install_script = check_script("install.sh")
     post_install_script = check_script("post-install.sh")
     config_files = [
-        entry for entry in directory.iterdir() if entry.is_file() and entry.name not in _SCRIPT_NAMES
+        entry
+        for entry in directory.iterdir()
+        if entry.is_file() and entry.name not in _SCRIPT_NAMES
     ]
-    
+
     # Implicit dependency on package with the same name
     package_dependencies = {directory.name}
     package_dependencies.update(
         dependency
         for script in [install_script, post_install_script]
-        if script is not None 
+        if script is not None
         for dependency in dependencies.get_script_dependencies(script)
     )
     return ToolInfo(

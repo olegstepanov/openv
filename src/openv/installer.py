@@ -1,9 +1,9 @@
-from pathlib import Path
-from typing import Iterable
 import subprocess
+from collections.abc import Iterable
+from pathlib import Path
 
+from . import packages
 from .discovery import ToolInfo
-from .import packages
 from .packages import PackageManager
 from .stow import all_links_valid, stow
 
@@ -18,14 +18,10 @@ def is_installed(
     pm: PackageManager,
     home: Path,
 ) -> bool:
-    for package in tool.package_dependencies:
-        if not packages.is_installed(pm, package):
-            return False
-        
-    if not all_links_valid(tool, home):
-        return False
-    
-    return True
+    all_packages_installed = all(
+        packages.is_installed(pm, p) for p in tool.package_dependencies
+    )
+    return all_packages_installed and all_links_valid(tool, home)
 
 
 def install_tool(
@@ -34,13 +30,12 @@ def install_tool(
     home: Path,
     force: bool = False,
 ) -> None:
+    """Run the four-step install sequence for a single tool."""
     missing_packages = [
         package
         for package in tool.package_dependencies
         if not packages.is_installed(pm, package)
     ]
-    
-    """Run the four-step install sequence for a single tool."""
     if not force and not missing_packages and all_links_valid(tool, home):
         return
 
@@ -69,6 +64,5 @@ def install_tools(
     force: bool = False,
 ) -> None:
     """Install tools in topological order."""
-    tool_map = {t.name: t for t in tools}
     for tool in tools:
         install_tool(tool, pm, home, force=force)
