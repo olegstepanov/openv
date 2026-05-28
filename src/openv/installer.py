@@ -1,3 +1,5 @@
+"""Tool installation orchestration: runs the four-step install sequence per tool."""
+
 import subprocess
 from collections.abc import Iterable
 from pathlib import Path
@@ -18,6 +20,7 @@ def is_installed(
     pm: PackageManager,
     home: Path,
 ) -> bool:
+    """Return True if all packages are installed and all config symlinks are valid."""
     all_packages_installed = all(
         packages.is_installed(pm, p) for p in tool.package_dependencies
     )

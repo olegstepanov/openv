@@ -1,3 +1,5 @@
+"""CLI entry point for openv."""
+
 import argparse
 import importlib.metadata
 import importlib.resources
@@ -49,6 +51,7 @@ def _cmd_generate_bootstrap(dotfiles_url: str) -> None:
 
 
 def main() -> None:
+    """Parse arguments and dispatch to the appropriate subcommand."""
     parser = argparse.ArgumentParser(
         prog="openv",
         description="Bootstrap your UNIX environment from a dotfiles repository",

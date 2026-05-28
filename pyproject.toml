@@ -23,6 +23,7 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "basedpyright>=1.39.6",
+    "pydoclint>=0.8.4",
     "pyright>=1.1.409",
     "ruff>=0.15.15",
 ]
@@ -47,14 +48,33 @@ select = [
     "S",   # flake8-bandit (basic security)
     "PTH", # flake8-use-pathlib
     "RUF", # Ruff-specific rules
+    "D",   # pydocstyle
 ]
-
-[tool.ruff.lint.isort]
-known-first-party = ["openv"]
+ignore = [
+    # Style choices:
+    "D105",  # missing docstring in magic methods (__str__, __repr__, etc.)
+    "D107",  # missing docstring in __init__ — document on the class instead
+]
 
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
 
+[tool.ruff.lint.isort]
+known-first-party = ["openv"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"  # or "numpy" / "pep257"
+
+[tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = ["D104"]      # empty __init__.py is fine
+
 [tool.basedpyright]
 reportUnusedCallResult = "none"
+
+[tool.pydoclint]
+style = "google"
+arg-type-hints-in-docstring = false  # types live in annotations, not docstrings
+check-return-types = true
+check-yield-types = true
+allow-init-docstring = false         # matches ignoring D107 above

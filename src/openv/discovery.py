@@ -1,3 +1,5 @@
+"""Tool discovery: enumerate tools from a dotfiles repository root."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -13,6 +15,7 @@ _SCRIPT_NAMES = {"install.sh", "post-install.sh"}
 
 @dataclass
 class ToolInfo:
+    """Metadata about a single tool in the dotfiles repository."""
     name: str
     directory: Path
     package_dependencies: list[str] = field(default_factory=list)
@@ -22,6 +25,7 @@ class ToolInfo:
 
 
 def discover(dotfiles_root: Path) -> dict[str, ToolInfo]:
+    """Return all tools found at the dotfiles root, keyed by name."""
     tools: dict[str, ToolInfo] = {}
     for entry in dotfiles_root.iterdir():
         if not entry.is_dir():

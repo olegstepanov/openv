@@ -1,3 +1,5 @@
+"""Config symlinking: mirrors tool directory structure under $HOME."""
+
 from pathlib import Path
 
 from openv.discovery import ToolInfo

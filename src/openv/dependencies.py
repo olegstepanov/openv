@@ -1,3 +1,5 @@
+"""Shebang-based package dependency inference for tool scripts."""
+
 from __future__ import annotations
 
 from pathlib import Path

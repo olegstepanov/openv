@@ -1,3 +1,5 @@
+"""Platform detection and package manager abstraction (brew, apt, opkg)."""
+
 from __future__ import annotations
 
 import shutil
@@ -6,17 +8,20 @@ from enum import Enum
 
 
 class PackageManager(Enum):
+    """Supported platform package managers."""
     BREW = "brew"
     APT = "apt"
     OPKG = "opkg"
 
 
 class InstallationError(Exception):
+    """Raised when a package manager fails to install a package."""
     def __init__(self, package: str) -> None:
         super().__init__(f'Error installing package "{package}"')
 
 
 def detect() -> PackageManager:
+    """Detect the platform's package manager from PATH; raise if none found."""
     for pm in (PackageManager.BREW, PackageManager.APT, PackageManager.OPKG):
         if shutil.which(pm.value):
             return pm
@@ -24,6 +29,7 @@ def detect() -> PackageManager:
 
 
 def is_installed(pm: PackageManager, package: str) -> bool:
+    """Return True if the package is already installed on the system."""
     match pm:
         case PackageManager.BREW:
             result = subprocess.run(  # noqa: S603
@@ -51,6 +57,7 @@ def is_installed(pm: PackageManager, package: str) -> bool:
 
 
 def install_package(pm: PackageManager, package: str) -> None:
+    """Install a package via the given package manager; skip if already installed."""
     if is_installed(pm, package):
         return
     try:
