@@ -14,9 +14,18 @@ The implementation has not started yet. See `openspec/changes/create-openv/` for
 
 Run `/opsx:apply` to begin implementing.
 
-## Tech stack (planned)
+## Tech stack
 
 - Python 3.11+
 - `pyproject.toml` packaging with `openv` CLI entry point
 - Dependencies: `questionary`, `rich`
 - POSIX sh for the generated bootstrap script template
+
+## Git Workflow
+
+- Always create a feature branch before starting new work
+- Branch naming: `feature/<short-description>`, `fix/<issue-id>`, `chore/<task>`
+- Never commit directly to `main`
+- Use conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`
+- Rebase branch over origin main before pushing
+- Open a PR with auto merge (`--auto`) when the feature is complete
