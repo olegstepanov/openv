@@ -27,7 +27,7 @@ def detect() -> PackageManager:
     for pm in (PackageManager.BREW, PackageManager.APT, PackageManager.OPKG):
         if shutil.which(pm.value):
             return pm
-    raise RuntimeError("No supported package manager (brew, apt-get or opkg) found. ")
+    raise RuntimeError("No supported package manager (brew, apt-get or opkg) found.")
 
 
 def is_installed(pm: PackageManager, package: str) -> bool:
