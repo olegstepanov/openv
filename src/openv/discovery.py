@@ -16,6 +16,7 @@ _SCRIPT_NAMES = {"install.sh", "post-install.sh"}
 @dataclass
 class ToolInfo:
     """Metadata about a single tool in the dotfiles repository."""
+
     name: str
     directory: Path
     package_dependencies: list[str] = field(default_factory=list)

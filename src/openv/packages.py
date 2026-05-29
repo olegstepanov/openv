@@ -9,6 +9,7 @@ from enum import Enum
 
 class PackageManager(Enum):
     """Supported platform package managers."""
+
     BREW = "brew"
     APT = "apt"
     OPKG = "opkg"
@@ -16,6 +17,7 @@ class PackageManager(Enum):
 
 class InstallationError(Exception):
     """Raised when a package manager fails to install a package."""
+
     def __init__(self, package: str) -> None:
         super().__init__(f'Error installing package "{package}"')
 

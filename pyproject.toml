@@ -68,9 +68,11 @@ convention = "google"  # or "numpy" / "pep257"
 
 [tool.ruff.lint.per-file-ignores]
 "**/__init__.py" = ["D104"]      # empty __init__.py is fine
+"dev/**" = ["ANN", "TCH", "S603"]  # dev scripts, no typing required
 
 [tool.basedpyright]
 reportUnusedCallResult = "none"
+include = ["src"]
 
 [tool.pydoclint]
 style = "google"
