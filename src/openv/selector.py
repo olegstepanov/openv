@@ -30,8 +30,8 @@ def select_tools(
     """Show an interactive checkbox selector; return selected tool names."""
     choices: list[questionary.Choice] = []
     for tool in tools:
-        is_installed = installer.is_installed(tool, pm, home)
-        status = _tool_status(tool, is_installed)
+        tool_is_installed = installer.is_installed(tool, pm, home)
+        status = _tool_status(tool, tool_is_installed)
         label = f"{tool.name}  [{status}]"
         choice = questionary.Choice(
             title=label,
