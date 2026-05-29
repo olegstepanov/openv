@@ -18,7 +18,9 @@ class TestRunScript:
         script.chmod(0o755)
         _run_script(script)
 
-    def test_non_executable_script_raises_permission_error(self, tmp_path: Path) -> None:
+    def test_non_executable_script_raises_permission_error(
+        self, tmp_path: Path
+    ) -> None:
         """A script without the executable bit raises PermissionError before running."""
         script = tmp_path / "install.sh"
         script.write_text("#!/bin/sh\nexit 0\n")
