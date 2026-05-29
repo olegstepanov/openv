@@ -29,8 +29,21 @@ def stow(tool: ToolInfo, home: Path, force: bool = False) -> None:
     """Create symlinks for a tool's config files under home."""
     for link_path, target in expected_links(tool, home):
         if link_path.is_symlink():
-            if not force:
+            if link_path.resolve() == target.resolve():
                 continue
+            if not force:
+                hint = "remove it manually or re-run with --force"
+                raise FileExistsError(
+                    f"symlink at {link_path} points to wrong target — {hint}"
+                )
+            link_path.unlink()
+        elif link_path.is_dir():
+            hint = "remove it manually or re-run with --force"
+            raise FileExistsError(f"directory exists at {link_path} — {hint}")
+        elif link_path.exists():
+            if not force:
+                hint = "remove it manually or re-run with --force"
+                raise FileExistsError(f"regular file exists at {link_path} — {hint}")
             link_path.unlink()
         link_path.parent.mkdir(parents=True, exist_ok=True)
         link_path.symlink_to(target)
