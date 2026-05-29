@@ -25,6 +25,7 @@ dev = [
     "basedpyright>=1.39.6",
     "pydoclint>=0.8.4",
     "pyright>=1.1.409",
+    "pytest>=9.0.3",
     "ruff>=0.15.15",
 ]
 
@@ -69,6 +70,7 @@ convention = "google"  # or "numpy" / "pep257"
 [tool.ruff.lint.per-file-ignores]
 "**/__init__.py" = ["D104"]      # empty __init__.py is fine
 "dev/**" = ["ANN", "TCH", "S603"]  # dev scripts, no typing required
+"tests/**" = ["S101"]            # assert is the standard pytest assertion
 
 [tool.basedpyright]
 reportUnusedCallResult = "none"

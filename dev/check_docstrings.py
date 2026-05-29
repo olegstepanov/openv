@@ -77,7 +77,7 @@ if __name__ == "__main__":
         default=5,
         help="Minimum meaningful body lines that require a docstring (default: 5)",
     )
-    parser.add_argument("files", nargs="*", default=["src/", "dev/"])
+    parser.add_argument("files", nargs="*", default=["src/", "dev/", "tests/"])
     args = parser.parse_args()
 
     all_files: list[Path] = []
