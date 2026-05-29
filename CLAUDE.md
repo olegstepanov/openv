@@ -27,5 +27,5 @@ Run `/opsx:apply` to begin implementing.
 - Branch naming: `feature/<short-description>`, `fix/<issue-id>`, `chore/<task>`
 - Never commit directly to `main`
 - Use conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`
-- Rebase branch over origin main before pushing
+- Make sure branch is up-to-date before pushing
 - Open a PR with auto merge (`--auto`) when the feature is complete
