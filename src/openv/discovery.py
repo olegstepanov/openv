@@ -41,7 +41,10 @@ def discover(dotfiles_root: Path) -> dict[str, ToolInfo]:
 
 
 def _create_tool_from_directory(directory: Path) -> ToolInfo:
+    """Build a ToolInfo by inspecting a tool directory."""
+
     def check_script(file_name: str) -> Path | None:
+        """Return path to file_name if it exists as a regular file, else None."""
         path = directory / file_name
         if not path.exists():
             return None

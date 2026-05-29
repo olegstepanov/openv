@@ -29,6 +29,7 @@ if __name__ == "__main__":
         ruff_check_cmd,
         ["basedpyright"],
         ["pydoclint", *args.files],
+        [sys.executable, "dev/check_docstrings.py", "--threshold", "5", *args.files],
     ]
 
     for command in commands:
