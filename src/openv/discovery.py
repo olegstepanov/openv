@@ -56,8 +56,9 @@ def _create_tool_from_directory(directory: Path) -> ToolInfo:
     post_install_script = check_script("post-install.sh")
     config_files = [
         entry
-        for entry in directory.iterdir()
-        if entry.is_file() and entry.name not in _SCRIPT_NAMES
+        for entry in directory.rglob("*")
+        if entry.is_file()
+        and not (entry.parent == directory and entry.name in _SCRIPT_NAMES)
     ]
 
     # Implicit dependency on package with the same name

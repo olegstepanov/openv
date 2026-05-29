@@ -1,4 +1,4 @@
-.PHONY: setup lint lint-fix lint-fix-unsafe
+.PHONY: setup lint lint-fix lint-fix-unsafe test
 
 setup:
 	uv sync
@@ -12,3 +12,6 @@ lint-fix:
 
 lint-fix-unsafe:
 	uv run dev/lint.py --force
+
+test:
+	uv run pytest

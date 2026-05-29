@@ -7,7 +7,7 @@ import sys
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run all linters")
-    parser.add_argument("files", nargs="*", default=["src/", "dev/"])
+    parser.add_argument("files", nargs="*", default=["src/", "dev/", "tests/"])
     parser.add_argument("--fix", action="store_true", help="Apply safe auto-fixes")
     parser.add_argument(
         "--force",
