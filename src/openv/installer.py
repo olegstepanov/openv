@@ -1,10 +1,12 @@
 """Tool installation orchestration: runs the four-step install sequence per tool."""
 
+import graphlib
 import subprocess
-from collections.abc import Iterable
 from pathlib import Path
+from typing import cast
 
 from . import packages
+from .dependencies import build_tool_dependency_graph
 from .discovery import ToolInfo
 from .packages import PackageManager
 from .stow import all_links_valid, stow
@@ -61,11 +63,55 @@ def install_tool(
 
 
 def install_tools(
-    tools: Iterable[ToolInfo],
+    selected_tools: list[ToolInfo],
+    all_tools: dict[str, ToolInfo],
     pm: PackageManager,
     home: Path,
     force: bool = False,
 ) -> None:
-    """Install tools in topological order."""
-    for tool in tools:
+    """Install tools in topological order, including transitive dependencies.
+
+    Expands the selected tool list to include any transitive tool dependencies
+    not explicitly selected by the user, then installs all required tools in
+    dependency order.
+
+    Args:
+        selected_tools: Tools explicitly chosen by the user.
+        all_tools: All tools discovered in the dotfiles repository, keyed by name.
+        pm: The package manager to use for installing packages.
+        home: The user's home directory for symlinking configs.
+        force: If True, re-link configs and re-run scripts even if already done.
+
+    Raises:
+        ValueError: If a circular dependency is detected among the tools.
+    """
+    # Expand selected tools to include transitive tool dependencies
+    tools_to_install: dict[str, ToolInfo] = {}
+    pending = list(selected_tools)
+    while pending:
+        tool = pending.pop()
+        if tool.name in tools_to_install:
+            continue
+        tools_to_install[tool.name] = tool
+        for package_dependency in tool.package_dependencies:
+            if (
+                package_dependency in all_tools
+                and package_dependency not in tools_to_install
+            ):
+                pending.append(all_tools[package_dependency])
+
+    # Build tool dependency graph and sort in topological order
+    tool_dependency_graph = build_tool_dependency_graph(list(tools_to_install.values()))
+    sorter = graphlib.TopologicalSorter(tool_dependency_graph)
+    try:
+        ordered_tool_names = list(sorter.static_order())
+    except graphlib.CycleError as cycle_error:
+        cycle_nodes = cast("list[str]", cycle_error.args[1])
+        cycle_description = " -> ".join(cycle_nodes)
+        raise ValueError(
+            f"Circular tool dependency detected: {cycle_description}"
+        ) from cycle_error
+
+    for tool_name in ordered_tool_names:
+        tool = tools_to_install[tool_name]
         install_tool(tool, pm, home, force=force)

@@ -38,7 +38,7 @@ def _cmd_install(dotfiles: Path, force: bool, tool_names: list[str]) -> None:
             return
 
     selected_tools = [tools[name] for name in selected_names]
-    install_tools(selected_tools, pm, home, force=force)
+    install_tools(selected_tools, tools, pm, home, force=force)
 
 
 def _cmd_generate_bootstrap(dotfiles_url: str) -> None:
