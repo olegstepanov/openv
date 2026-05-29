@@ -20,6 +20,7 @@ class _Args(argparse.Namespace):
 
 
 def _cmd_install(dotfiles: Path, force: bool, tool_names: list[str]) -> None:
+    """Discover, select, and install tools from a dotfiles repository."""
     home = Path.home()
     pm = detect()
 
@@ -41,6 +42,7 @@ def _cmd_install(dotfiles: Path, force: bool, tool_names: list[str]) -> None:
 
 
 def _cmd_generate_bootstrap(dotfiles_url: str) -> None:
+    """Render the bootstrap script template and write it to stdout."""
     template = (
         importlib.resources.files("openv").joinpath("bootstrap.sh.template").read_text()
     )
