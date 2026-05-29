@@ -33,12 +33,12 @@ def select_tools(
     for tool in tools:
         status = _tool_status(tool, home)
         label = f"{tool.name}  [{status}]"
-        is_installed = installer.is_installed(tool, pm, home)
+        tool_is_installed = installer.is_installed(tool, pm, home)
         choice = questionary.Choice(
             title=label,
             value=tool.name,
-            checked=is_installed,
-            disabled="Installed" if is_installed else None,
+            checked=tool_is_installed,
+            disabled="Installed" if tool_is_installed else None,
         )
         choices.append(choice)
 

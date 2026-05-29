@@ -61,7 +61,7 @@
 
 - [ ] 10.1 Unit test: tool discovery (hidden dirs ignored, files ignored, tool list correct)
 - [ ] 10.2 Unit test: shebang parser (various shebangs, missing shebang, non-tool interpreter)
-- [ ] 10.3 Unit test: topological sort (correct order, cycle detection error)
 - [x] 10.4 Unit test: symlink manager (correct paths, intermediate dirs, skips scripts)
+- [x] 10.3 Unit test: topological sort (correct order, cycle detection error)
 - [ ] 10.5 Unit test: idempotency checks (all symlinks valid → skip entire tool, partial → proceed)
 - [ ] 10.6 Integration test: `openv install` on a temp dotfiles dir with mocked package manager
