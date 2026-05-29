@@ -1,6 +1,7 @@
 """Tool installation orchestration: runs the four-step install sequence per tool."""
 
 import graphlib
+import os
 import subprocess
 from pathlib import Path
 from typing import cast
@@ -13,7 +14,9 @@ from .stow import all_links_valid, stow
 
 
 def _run_script(script: Path) -> None:
-    """Execute a script using its declared shebang interpreter, or /bin/sh."""
+    """Execute a script via OS execution; raises PermissionError if not executable."""
+    if not os.access(script, os.X_OK):
+        raise PermissionError(f"Script is not executable: {script}")
     subprocess.run([str(script)], check=True)  # noqa: S603
 
 

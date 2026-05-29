@@ -74,13 +74,13 @@ openv SHALL proceed with scripts and config linking even if the tool's package w
 - **WHEN** the tool's package is already installed but no config symlinks exist
 - **THEN** openv skips package installation and proceeds with scripts and linking
 
-### Requirement: Scripts are executed with their declared interpreter
-openv SHALL execute `install.sh` and `post-install.sh` using the interpreter declared in their shebang line. If no shebang is present, the script SHALL be executed with `/bin/sh`.
+### Requirement: Scripts are executed via OS execution
+openv SHALL execute `install.sh` and `post-install.sh` by passing the script path directly to the OS, without parsing or constructing an explicit interpreter invocation. If the script does not have the executable bit set, openv SHALL abort with a clear error before attempting to run it.
 
-#### Scenario: Script with bash shebang
-- **WHEN** install.sh begins with `#!/bin/bash`
-- **THEN** openv executes it as `bash install.sh`
+#### Scenario: Executable script is run by the OS
+- **WHEN** install.sh has the executable bit set
+- **THEN** openv passes it directly to the OS; the kernel handles any shebang
 
-#### Scenario: Script with no shebang
-- **WHEN** install.sh has no shebang line
-- **THEN** openv executes it as `sh install.sh`
+#### Scenario: Non-executable script aborts with an error
+- **WHEN** install.sh does not have the executable bit set
+- **THEN** openv aborts immediately with a clear error message before running the script
