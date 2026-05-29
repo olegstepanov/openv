@@ -11,7 +11,6 @@ _INTERPRETER_PACKAGES: dict[str, str] = {
 
 
 def _parse_shebang(script: Path) -> str | None:
-    """Return the interpreter name from a shebang line, or None."""
     try:
         with script.open("r", encoding="utf-8", errors="replace") as f:
             first_line = f.readline().rstrip("\n")
