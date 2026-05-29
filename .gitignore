@@ -1,3 +1,5 @@
+.claude/worktrees/
+
 *.local.md
 
 __pycache__/
