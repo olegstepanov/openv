@@ -36,8 +36,8 @@ def select_tools(
         choice = questionary.Choice(
             title=label,
             value=tool.name,
-            checked=is_installed,
-            disabled="Installed" if is_installed else None,
+            checked=tool_is_installed,
+            disabled="Installed" if tool_is_installed else None,
         )
         choices.append(choice)
 
