@@ -41,7 +41,7 @@ def _parse_shebang(script: Path) -> str | None:
 
 
 def get_script_dependencies(script: Path) -> list[str]:
-    """Return the package name inferred from a script's shebang, or None."""
+    """Return the package names inferred from a script's shebang, or an empty list."""
     interpreter = _parse_shebang(script)
     if interpreter is None:
         return []
