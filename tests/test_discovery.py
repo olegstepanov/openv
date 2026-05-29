@@ -43,22 +43,24 @@ class TestCreateToolFromDirectory:
 
     def test_install_script_detected(self, tmp_path: Path) -> None:
         """install.sh at the top level is identified as install_script."""
-        _make_file(tmp_path / "zsh" / "install.sh", "#!/bin/sh\necho hi")
+        install_script = tmp_path / "zsh" / "install.sh"
+        _make_file(install_script)
         tool = self._discover_single(tmp_path, "zsh")
         assert tool.install_script is not None
-        assert tool.install_script.name == "install.sh"
+        assert tool.install_script == install_script
 
     def test_post_install_script_detected(self, tmp_path: Path) -> None:
         """post-install.sh at the top level is identified as post_install_script."""
-        _make_file(tmp_path / "zsh" / "post-install.sh", "#!/bin/sh\necho done")
+        post_install_script = tmp_path / "zsh" / "post-install.sh"
+        _make_file(post_install_script)
         tool = self._discover_single(tmp_path, "zsh")
         assert tool.post_install_script is not None
-        assert tool.post_install_script.name == "post-install.sh"
+        assert tool.post_install_script == post_install_script
 
     def test_top_level_script_not_in_config_files(self, tmp_path: Path) -> None:
         """install.sh and post-install.sh are excluded from config_files."""
-        _make_file(tmp_path / "zsh" / "install.sh", "#!/bin/sh")
-        _make_file(tmp_path / "zsh" / "post-install.sh", "#!/bin/sh")
+        _make_file(tmp_path / "zsh" / "install.sh")
+        _make_file(tmp_path / "zsh" / "post-install.sh")
         tool = self._discover_single(tmp_path, "zsh")
         names = {f.name for f in tool.config_files}
         assert "install.sh" not in names
@@ -72,17 +74,17 @@ class TestCreateToolFromDirectory:
 
     def test_nested_config_file_discovered(self, tmp_path: Path) -> None:
         """Config files in subdirectories are recursively discovered."""
-        _make_file(tmp_path / "nvim" / ".config" / "nvim" / "init.vim")
+        init_vim_path = tmp_path / "nvim" / ".config" / "nvim" / "init.vim"
+        _make_file(init_vim_path)
         tool = self._discover_single(tmp_path, "nvim")
-        relative_paths = [f.relative_to(tmp_path / "nvim") for f in tool.config_files]
-        assert Path(".config/nvim/init.vim") in relative_paths
+        assert tool.config_files == [init_vim_path]
 
     def test_install_sh_in_subdirectory_is_config_file(self, tmp_path: Path) -> None:
         """A file named install.sh inside a subdirectory is treated as a config file."""
-        _make_file(tmp_path / "nvim" / ".config" / "nvim" / "install.sh")
+        install_sh_path = tmp_path / "nvim" / ".config" / "nvim" / "install.sh"
+        _make_file(install_sh_path)
         tool = self._discover_single(tmp_path, "nvim")
-        relative_paths = [f.relative_to(tmp_path / "nvim") for f in tool.config_files]
-        assert Path(".config/nvim/install.sh") in relative_paths
+        assert tool.config_files == [install_sh_path]
 
     def test_implicit_package_dependency(self, tmp_path: Path) -> None:
         """The tool directory name is always included as a package dependency."""
