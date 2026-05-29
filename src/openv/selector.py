@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 import questionary
 
 from . import installer
-from .stow import all_links_valid
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -17,8 +16,8 @@ if TYPE_CHECKING:
     from .packages import PackageManager
 
 
-def _tool_status(tool: ToolInfo, home: Path) -> str:
-    if all_links_valid(tool, home):
+def _tool_status(tool: ToolInfo, is_installed: bool) -> str:
+    if is_installed:
         return "installed"
     if not tool.config_files:
         return "no configs"
@@ -31,9 +30,9 @@ def select_tools(
     """Show an interactive checkbox selector; return selected tool names."""
     choices: list[questionary.Choice] = []
     for tool in tools:
-        status = _tool_status(tool, home)
-        label = f"{tool.name}  [{status}]"
         is_installed = installer.is_installed(tool, pm, home)
+        status = _tool_status(tool, is_installed)
+        label = f"{tool.name}  [{status}]"
         choice = questionary.Choice(
             title=label,
             value=tool.name,
