@@ -5,6 +5,7 @@ from __future__ import annotations
 import shutil
 import subprocess
 from enum import Enum
+from typing import assert_never
 
 
 class PackageManager(Enum):
@@ -56,6 +57,8 @@ def is_installed(pm: PackageManager, package: str) -> bool:
                 result.returncode == 0
                 and "Status: install ok installed" in result.stdout
             )
+        case _:
+            assert_never(pm)
 
 
 def install_package(pm: PackageManager, package: str) -> None:
@@ -70,5 +73,7 @@ def install_package(pm: PackageManager, package: str) -> None:
                 subprocess.run(["apt-get", "install", "-y", package], check=True)  # noqa: S603, S607
             case PackageManager.OPKG:
                 subprocess.run(["opkg", "install", package], check=True)  # noqa: S603, S607
+            case _:
+                assert_never(pm)
     except subprocess.CalledProcessError as e:
         raise InstallationError(package) from e

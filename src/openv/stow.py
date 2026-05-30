@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from openv.discovery import ToolInfo
+from .discovery import ToolInfo
 
 
 def expected_links(tool: ToolInfo, home: Path) -> list[tuple[Path, Path]]:
@@ -38,8 +38,9 @@ def stow(tool: ToolInfo, home: Path, force: bool = False) -> None:
                 )
             link_path.unlink()
         elif link_path.is_dir():
-            hint = "remove it manually or re-run with --force"
-            raise FileExistsError(f"directory exists at {link_path} — {hint}")
+            raise FileExistsError(
+                f"directory exists at {link_path} — remove it manually"
+            )
         elif link_path.exists():
             if not force:
                 hint = "remove it manually or re-run with --force"
