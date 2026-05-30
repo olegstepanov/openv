@@ -42,7 +42,7 @@ When run on a new machine, the generated script SHALL detect the platform's pack
 
 #### Scenario: Unknown package manager
 - **WHEN** the script cannot detect a known package manager
-- **THEN** it prints a human-readable error listing the required prerequisites and exits
+- **THEN** it prints a human-readable error reporting that no supported package manager was found and exits non-zero
 
 ### Requirement: Generated script clones the dotfiles repo and runs openv install
 After installing prerequisites and openv, the generated script SHALL clone the dotfiles repository to `$HOME/.openv` and execute `openv install`.

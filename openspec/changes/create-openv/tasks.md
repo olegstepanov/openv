@@ -1,13 +1,13 @@
 ## 1. Project Scaffold
 
 - [x] 1.1 Initialize pyproject.toml with package metadata, Python 3.11+ requirement, and `openv` CLI entry point
-- [x] 1.2 Create `src/openv/` package structure with empty module files (cli.py, installer.py, stow.py, discovery.py, platforms.py, deps.py)
+- [x] 1.2 Create `src/openv/` package structure with empty module files (cli.py, installer.py, stow.py, discovery.py, packages.py, dependencies.py)
 - [x] 1.3 Add dependencies to pyproject.toml: questionary (interactive UI), rich (output formatting)
 - [x] 1.4 Add `bootstrap.sh` template file to the package (embedded as a resource)
 
 ## 2. Platform Detection
 
-- [x] 2.1 Implement `platforms.py`: detect package manager from PATH (brew, apt-get, opkg)
+- [x] 2.1 Implement `packages.py`: detect package manager from PATH (brew, apt-get, opkg)
 - [x] 2.2 Implement `install_package(name)` per platform, skipping if already installed
 - [x] 2.3 Implement `install_packages(names)` for installing the prerequisite list (git, python3, pip) with platform-specific package names
 
@@ -18,7 +18,7 @@
 
 ## 4. Dependency Resolution
 
-- [x] 4.1 Implement shebang parser in `deps.py`: read first line of a script file, extract interpreter name
+- [x] 4.1 Implement shebang parser in `dependencies.py`: read first line of a script file, extract interpreter name
 - [x] 4.2 Implement dependency graph builder: implicit same-name package dep + shebang-inferred tool deps
 - [x] 4.3 Implement topological sort with cycle detection (raise clear error listing involved tools)
 - [x] 4.4 Implement auto-inclusion of dependency tools not explicitly selected by user
@@ -33,7 +33,7 @@
 
 - [x] 6.1 Implement `installer.py`: run the four-step sequence (package, install.sh, stow, post-install.sh) for a single tool
 - [x] 6.2 Wire up idempotency: skip package install if already present; skip stow if all symlinks valid (unless --force)
-- [x] 6.3 Implement script execution: run scripts with their declared shebang interpreter, fall back to `/bin/sh`
+- [x] 6.3 Implement script execution: pass scripts directly to the OS (kernel handles the shebang) and abort with a clear error if the executable bit is not set
 - [x] 6.4 Implement full install loop: iterate tools in topological order, run installer per tool
 
 ## 7. Interactive Selector
@@ -49,19 +49,19 @@
 
 ## 9. Bootstrap Script Template
 
-- [ ] 9.1 Write `bootstrap.sh.template`: POSIX sh, variables at top (`OPENV_VERSION`, `DOTFILES_URL`), package manager detection function
-- [ ] 9.2 Implement prerequisites installation in template: platform-aware install of git + python3 + pip (python3-pip on apt/opkg, bundled with brew's Python)
-- [ ] 9.3 Implement dotfiles clone step in template: abort with clear error if `$HOME/.openv` already exists
-- [ ] 9.4 Implement pip install + openv invocation in template
+- [x] 9.1 Write `bootstrap.sh.template`: POSIX sh, variables at top (`OPENV_VERSION`, `DOTFILES_URL`), package manager detection function
+- [x] 9.2 Implement prerequisites installation in template: platform-aware install of git + python3 + pip (python3-pip on apt/opkg, bundled with brew's Python)
+- [x] 9.3 Implement dotfiles clone step in template: abort with clear error if `$HOME/.openv` already exists
+- [x] 9.4 Implement pip install + openv invocation in template
 - [ ] 9.5 Validate generated script syntax with `sh -n bootstrap.sh`; manually verify on macOS, Ubuntu, and OpenWRT before v1 release
 
 ## 10. Unit & Integration Tests
 
 <!-- E2E tests (multi-platform via Docker/QEMU/self-hosted runners) are deferred to v2 -->
 
-- [ ] 10.1 Unit test: tool discovery (hidden dirs ignored, files ignored, tool list correct)
-- [ ] 10.2 Unit test: shebang parser (various shebangs, missing shebang, non-tool interpreter)
+- [x] 10.1 Unit test: tool discovery (hidden dirs ignored, files ignored, tool list correct)
+- [x] 10.2 Unit test: shebang parser (various shebangs, missing shebang, non-tool interpreter)
 - [x] 10.4 Unit test: symlink manager (correct paths, intermediate dirs, skips scripts)
 - [x] 10.3 Unit test: topological sort (correct order, cycle detection error)
-- [ ] 10.5 Unit test: idempotency checks (all symlinks valid → skip entire tool, partial → proceed)
-- [ ] 10.6 Integration test: `openv install` on a temp dotfiles dir with mocked package manager
+- [x] 10.5 Unit test: idempotency checks (all symlinks valid → skip entire tool, scripts-only tool runs every time)
+- [x] 10.6 Integration test: `openv install` on a temp dotfiles dir with mocked package manager
