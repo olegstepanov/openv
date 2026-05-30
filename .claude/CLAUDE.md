@@ -1,6 +1,4 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+# Instructions for Claude
 
 ## Project
 
@@ -20,6 +18,14 @@ Run `/opsx:apply` to begin implementing.
 - `pyproject.toml` packaging with `openv` CLI entry point
 - Dependencies: `questionary`, `rich`
 - POSIX sh for the generated bootstrap script template
+
+## Project commands
+
+Use the following Makefile targets:
+
+- `make setup` to setup project environment on new machine or new worktree
+- `make lint` to check code for syntax, style and type errors. Run for verification.
+- `make test` to run tests. Run for verification.
 
 ## Git Workflow
 
