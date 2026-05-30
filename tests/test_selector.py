@@ -66,6 +66,24 @@ class TestToolStatus:
 
         assert status == "no configs"
 
+    def test_scripts_only_tool_shows_non_idempotent(self, tmp_path: Path) -> None:
+        """B1: a tool with install.sh and no configs is flagged as non-idempotent."""
+        tool_directory = tmp_path / "ssh-agent"
+        tool_directory.mkdir()
+        install_script = tool_directory / "install.sh"
+        install_script.write_text("#!/bin/sh\nexit 0\n")
+        tool = ToolInfo(
+            name="ssh-agent",
+            directory=tool_directory,
+            package_dependencies=["ssh-agent"],
+            install_script=install_script,
+            config_files=[],
+        )
+
+        status = _tool_status(tool, is_installed=False)
+
+        assert status == "non-idempotent"
+
 
 class TestSelectToolsIsInstalledCalledOnce:
     """Tests that installer.is_installed is called once per tool in select_tools."""
