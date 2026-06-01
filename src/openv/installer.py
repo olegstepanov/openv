@@ -20,7 +20,7 @@ def _run_script(script: Path) -> None:
     subprocess.run([str(script)], check=True)  # noqa: S603
 
 
-def scripts_cannot_be_verified(tool: ToolInfo) -> bool:
+def is_scripts_only(tool: ToolInfo) -> bool:
     """Return True if the tool has scripts but no symlinks to verify completion.
 
     A tool with install.sh/post-install.sh but no config files leaves no
@@ -39,7 +39,7 @@ def is_installed(
     home: Path,
 ) -> bool:
     """Return True if all packages are installed and all config symlinks are valid."""
-    if scripts_cannot_be_verified(tool):
+    if is_scripts_only(tool):
         return False
     all_packages_installed = all(
         packages.is_installed(pm, p) for p in tool.package_dependencies
@@ -62,7 +62,7 @@ def install_tool(
     if (
         not force
         and not missing_packages
-        and not scripts_cannot_be_verified(tool)
+        and not is_scripts_only(tool)
         and all_links_valid(tool, home)
     ):
         return

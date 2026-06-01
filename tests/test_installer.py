@@ -14,12 +14,20 @@ from openv.installer import (
     _run_script,
     install_tool,
     is_installed,
-    scripts_cannot_be_verified,
+    is_scripts_only,
 )
 from openv.packages import PackageManager
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+
+def _write_script(directory: Path, name: str, content: str) -> Path:
+    """Write an executable script file and return its path."""
+    script = directory / name
+    script.write_text(content)
+    script.chmod(0o755)
+    return script
 
 
 def _make_tool(
@@ -39,17 +47,17 @@ def _make_tool(
         path.write_text(f"# {config_file}\n")
         config_paths.append(path)
 
-    install_script: Path | None = None
-    if install_script_content is not None:
-        install_script = tool_directory / "install.sh"
-        install_script.write_text(install_script_content)
-        install_script.chmod(0o755)
+    install_script = (
+        _write_script(tool_directory, "install.sh", install_script_content)
+        if install_script_content is not None
+        else None
+    )
 
-    post_install_script: Path | None = None
-    if post_install_script_content is not None:
-        post_install_script = tool_directory / "post-install.sh"
-        post_install_script.write_text(post_install_script_content)
-        post_install_script.chmod(0o755)
+    post_install_script = (
+        _write_script(tool_directory, "post-install.sh", post_install_script_content)
+        if post_install_script_content is not None
+        else None
+    )
 
     return ToolInfo(
         name=name,
@@ -92,20 +100,20 @@ class TestRunScript:
             _run_script(script)
 
 
-class TestScriptsCannotBeVerified:
-    """Tests for the scripts_cannot_be_verified() predicate."""
+class TestIsScriptsOnly:
+    """Tests for the is_scripts_only() predicate."""
 
     def test_true_when_install_script_and_no_configs(self, tmp_path: Path) -> None:
         """True for a tool with install.sh and no config files."""
         tool = _make_tool(tmp_path, "ssh-agent", install_script_content="#!/bin/sh\n")
-        assert scripts_cannot_be_verified(tool) is True
+        assert is_scripts_only(tool) is True
 
     def test_true_when_post_install_script_and_no_configs(self, tmp_path: Path) -> None:
         """True for a tool with only post-install.sh and no config files."""
         tool = _make_tool(
             tmp_path, "service", post_install_script_content="#!/bin/sh\n"
         )
-        assert scripts_cannot_be_verified(tool) is True
+        assert is_scripts_only(tool) is True
 
     def test_false_when_scripts_with_configs(self, tmp_path: Path) -> None:
         """False when the tool also has config files (symlinks are the signal)."""
@@ -115,21 +123,21 @@ class TestScriptsCannotBeVerified:
             config_files=[".zshrc"],
             install_script_content="#!/bin/sh\n",
         )
-        assert scripts_cannot_be_verified(tool) is False
+        assert is_scripts_only(tool) is False
 
     def test_false_when_no_scripts(self, tmp_path: Path) -> None:
         """False for a config- or package-only tool (no scripts)."""
         config_only = _make_tool(tmp_path, "zsh", config_files=[".zshrc"])
         package_only = _make_tool(tmp_path, "htop")
-        assert scripts_cannot_be_verified(config_only) is False
-        assert scripts_cannot_be_verified(package_only) is False
+        assert is_scripts_only(config_only) is False
+        assert is_scripts_only(package_only) is False
 
 
 class TestIsInstalled:
     """Tests for installer.is_installed()."""
 
     def test_scripts_only_tool_is_never_installed(self, tmp_path: Path) -> None:
-        """B1: scripts-only tool is not 'installed' even if its package is present."""
+        """A scripts-only tool is not 'installed' before or after install_tool runs."""
         home = tmp_path / "home"
         home.mkdir()
         tool = _make_tool(
@@ -138,7 +146,13 @@ class TestIsInstalled:
             install_script_content="#!/bin/sh\nexit 0\n",
         )
         pm = MagicMock(spec=PackageManager)
-        with patch("openv.installer.packages.is_installed", return_value=True):
+        with (
+            patch("openv.installer.packages.is_installed", return_value=True),
+            patch("openv.installer.packages.install_package"),
+            patch("openv.installer._run_script"),
+        ):
+            assert is_installed(tool, pm, home) is False
+            install_tool(tool, pm, home, force=False)
             assert is_installed(tool, pm, home) is False
 
     def test_config_tool_installed_when_symlinks_and_package_present(
@@ -199,7 +213,7 @@ class TestInstallToolIdempotency:
     def test_scripts_only_tool_runs_install_sh_when_package_present(
         self, tmp_path: Path
     ) -> None:
-        """B1: scripts-only tool runs install.sh even when its package is present."""
+        """scripts-only tool runs install.sh even when its package is present."""
         dotfiles = tmp_path / "dotfiles"
         home = tmp_path / "home"
         home.mkdir()
@@ -229,7 +243,7 @@ class TestInstallScriptRun:
     def test_install_runs_install_sh_for_scripts_only_tool(
         self, tmp_path: Path
     ) -> None:
-        """B1 end-to-end: scripts-only tool with pre-installed pkg runs install.sh."""
+        """Scripts-only tool with pre-installed package runs install.sh."""
         dotfiles = tmp_path / "dotfiles"
         home = tmp_path / "home"
         home.mkdir()
