@@ -17,8 +17,11 @@ if TYPE_CHECKING:
 
 
 def _tool_status(tool: ToolInfo, is_installed: bool) -> str:
+    """Return the short status label shown next to the tool name in the selector."""
     if is_installed:
         return "installed"
+    if installer.scripts_cannot_be_verified(tool):
+        return "non-idempotent"
     if not tool.config_files:
         return "no configs"
     return "partial"
