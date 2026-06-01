@@ -20,12 +20,27 @@ def _run_script(script: Path) -> None:
     subprocess.run([str(script)], check=True)  # noqa: S603
 
 
+def is_scripts_only(tool: ToolInfo) -> bool:
+    """Return True if the tool has scripts but no symlinks to verify completion.
+
+    A tool with install.sh/post-install.sh but no config files leaves no
+    persistent trace of whether its scripts ran. Such tools cannot be treated as
+    idempotently complete; they must be re-run whenever selected.
+    """
+    has_scripts = (
+        tool.install_script is not None or tool.post_install_script is not None
+    )
+    return has_scripts and not tool.config_files
+
+
 def is_installed(
     tool: ToolInfo,
     pm: PackageManager,
     home: Path,
 ) -> bool:
     """Return True if all packages are installed and all config symlinks are valid."""
+    if is_scripts_only(tool):
+        return False
     all_packages_installed = all(
         packages.is_installed(pm, p) for p in tool.package_dependencies
     )
@@ -44,7 +59,12 @@ def install_tool(
         for package in tool.package_dependencies
         if not packages.is_installed(pm, package)
     ]
-    if not force and not missing_packages and all_links_valid(tool, home):
+    if (
+        not force
+        and not is_scripts_only(tool)
+        and not missing_packages
+        and all_links_valid(tool, home)
+    ):
         return
 
     # Step 1: install package dependencies
