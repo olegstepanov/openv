@@ -147,6 +147,17 @@ class TestStowDirectoryConflict:
         with pytest.raises(FileExistsError, match="directory exists"):
             stow(tool, home, force=True)
 
+    def test_directory_conflict_message_has_no_force_hint(self, tmp_path: Path) -> None:
+        """C1: directory conflict error does not suggest --force (it would not help)."""
+        dotfiles = tmp_path / "dotfiles"
+        home = tmp_path / "home"
+        home.mkdir()
+        tool = _make_tool(dotfiles, "zsh", [".zshrc"])
+        (home / ".zshrc").mkdir()
+        with pytest.raises(FileExistsError) as exc_info:
+            stow(tool, home)
+        assert "--force" not in str(exc_info.value)
+
 
 class TestStowWrongTargetSymlink:
     """Tests for symlinks pointing to the wrong target."""
