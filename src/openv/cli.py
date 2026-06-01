@@ -30,6 +30,15 @@ def _cmd_install(dotfiles: Path, force: bool, tool_names: list[str]) -> None:
         return
 
     if tool_names:
+        unknown = [name for name in tool_names if name not in tools]
+        if unknown:
+            unknown_list = ", ".join(unknown)
+            known_list = ", ".join(sorted(tools))
+            print(
+                f"Unknown tool(s): {unknown_list}. Known: {known_list}",
+                file=sys.stderr,
+            )
+            sys.exit(2)
         selected_names = tool_names
     else:
         selected_names = select_tools(tools.values(), pm, home)
