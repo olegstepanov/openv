@@ -234,5 +234,3 @@ class TestInstallToolIdempotency:
             install_tool(tool, pm, home, force=False)
 
         assert ran == [str(tool.install_script)]
-
-
