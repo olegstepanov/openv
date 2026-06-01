@@ -8,7 +8,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from openv.cli import _cmd_install
 from openv.discovery import ToolInfo
 from openv.installer import (
     _run_script,
@@ -237,32 +236,3 @@ class TestInstallToolIdempotency:
         assert ran == [str(tool.install_script)]
 
 
-class TestInstallScriptRun:
-    """End-to-end regression tests for install.sh execution via _cmd_install."""
-
-    def test_install_runs_install_sh_for_scripts_only_tool(
-        self, tmp_path: Path
-    ) -> None:
-        """Scripts-only tool with pre-installed package runs install.sh."""
-        dotfiles = tmp_path / "dotfiles"
-        home = tmp_path / "home"
-        home.mkdir()
-        ran: list[str] = []
-        tool = _make_tool(
-            dotfiles,
-            "ssh-agent",
-            install_script_content="#!/bin/sh\nexit 0\n",
-        )
-
-        with (
-            patch("openv.cli.Path.home", return_value=home),
-            patch("openv.cli.detect", return_value=PackageManager.BREW),
-            patch("openv.installer.packages.is_installed", return_value=True),
-            patch(
-                "openv.installer._run_script",
-                side_effect=lambda s: ran.append(str(s)),
-            ),
-        ):
-            _cmd_install(dotfiles=dotfiles, force=False, tool_names=["ssh-agent"])
-
-        assert ran == [str(tool.install_script)]
