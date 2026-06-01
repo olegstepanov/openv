@@ -59,8 +59,12 @@ def install_tool(
         for package in tool.package_dependencies
         if not packages.is_installed(pm, package)
     ]
-    if not is_scripts_only(tool):
-        if not force and not missing_packages and all_links_valid(tool, home):
+    if (
+        not force and 
+        not is_scripts_only(tool) and
+        not missing_packages and 
+        all_links_valid(tool, home)
+        ):
             return
 
     # Step 1: install package dependencies
