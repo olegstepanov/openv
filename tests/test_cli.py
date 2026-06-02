@@ -20,7 +20,7 @@ class TestCliUnknownToolError:
     def test_install_aborts_on_unknown_tool_name(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        """B2: unknown tool name exits non-zero with a clear message."""
+        """Unknown tool name exits non-zero with a clear message."""
         dotfiles = tmp_path / "dotfiles"
         (dotfiles / "zsh").mkdir(parents=True)
 
