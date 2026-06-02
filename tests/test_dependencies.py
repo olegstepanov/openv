@@ -7,7 +7,6 @@ import pytest
 from openv.dependencies import build_tool_dependency_graph, get_script_dependencies
 from openv.discovery import ToolInfo
 from openv.installer import install_tools
-from openv.packages import PackageManager
 
 
 def _write_script(path: Path, content: str) -> Path:
@@ -114,14 +113,16 @@ class TestTopologicalSortViaInstallTools:
 
         import unittest.mock as mock
 
-        with mock.patch("openv.installer.install_tool") as mock_install:
+        with (
+            mock.patch("openv.installer.detect_package_manager"),
+            mock.patch("openv.installer.install_tool") as mock_install,
+        ):
             mock_install.side_effect = lambda tool, pm, home, force=False: (
                 installed_order.append(tool.name)
             )
             install_tools(
                 selected_tools=[git, vim],
                 all_tools=all_tools,
-                pm=mock.MagicMock(spec=PackageManager),
                 home=tmp_path,
                 force=False,
             )
@@ -138,14 +139,16 @@ class TestTopologicalSortViaInstallTools:
 
         import unittest.mock as mock
 
-        with mock.patch("openv.installer.install_tool") as mock_install:
+        with (
+            mock.patch("openv.installer.detect_package_manager"),
+            mock.patch("openv.installer.install_tool") as mock_install,
+        ):
             mock_install.side_effect = lambda tool, pm, home, force=False: (
                 installed_order.append(tool.name)
             )
             install_tools(
                 selected_tools=[delta],
                 all_tools=all_tools,
-                pm=mock.MagicMock(spec=PackageManager),
                 home=tmp_path,
                 force=False,
             )
@@ -165,14 +168,16 @@ class TestTopologicalSortViaInstallTools:
 
         import unittest.mock as mock
 
-        with mock.patch("openv.installer.install_tool") as mock_install:
+        with (
+            mock.patch("openv.installer.detect_package_manager"),
+            mock.patch("openv.installer.install_tool") as mock_install,
+        ):
             mock_install.side_effect = lambda tool, pm, home, force=False: (
                 installed_order.append(tool.name)
             )
             install_tools(
                 selected_tools=[leaf],
                 all_tools=all_tools,
-                pm=mock.MagicMock(spec=PackageManager),
                 home=tmp_path,
                 force=False,
             )
@@ -189,11 +194,13 @@ class TestTopologicalSortViaInstallTools:
 
         import unittest.mock as mock
 
-        with pytest.raises(ValueError, match="Circular tool dependency detected"):
+        with (
+            mock.patch("openv.installer.detect_package_manager"),
+            pytest.raises(ValueError, match="Circular tool dependency detected"),
+        ):
             install_tools(
                 selected_tools=[tool_a, tool_b],
                 all_tools=all_tools,
-                pm=mock.MagicMock(spec=PackageManager),
                 home=tmp_path,
                 force=False,
             )
@@ -207,11 +214,13 @@ class TestTopologicalSortViaInstallTools:
 
         import unittest.mock as mock
 
-        with pytest.raises(ValueError, match="Circular tool dependency detected"):
+        with (
+            mock.patch("openv.installer.detect_package_manager"),
+            pytest.raises(ValueError, match="Circular tool dependency detected"),
+        ):
             install_tools(
                 selected_tools=[tool_a, tool_b, tool_c],
                 all_tools=all_tools,
-                pm=mock.MagicMock(spec=PackageManager),
                 home=tmp_path,
                 force=False,
             )

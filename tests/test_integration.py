@@ -26,7 +26,10 @@ class TestInstallIntegration:
 
         with (
             patch("openv.cli.Path.home", return_value=home),
-            patch("openv.cli.detect_package_manager", return_value=PackageManager.BREW),
+            patch(
+                "openv.installer.detect_package_manager",
+                return_value=PackageManager.BREW,
+            ),
             patch("openv.installer.packages.is_installed", return_value=True),
             patch("openv.installer.packages.install_package") as mock_install_package,
         ):
@@ -46,7 +49,10 @@ class TestInstallIntegration:
 
         with (
             patch("openv.cli.Path.home", return_value=home),
-            patch("openv.cli.detect_package_manager", return_value=PackageManager.BREW),
+            patch(
+                "openv.installer.detect_package_manager",
+                return_value=PackageManager.BREW,
+            ),
             patch("openv.installer.packages.is_installed", return_value=False),
             patch("openv.installer.packages.install_package") as mock_install_package,
         ):

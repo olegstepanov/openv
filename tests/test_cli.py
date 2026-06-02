@@ -3,12 +3,10 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from unittest.mock import patch
 
 import pytest
 
 from openv.cli import _cmd_install
-from openv.packages import PackageManager
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -24,10 +22,7 @@ class TestCliUnknownToolError:
         dotfiles = tmp_path / "dotfiles"
         (dotfiles / "zsh").mkdir(parents=True)
 
-        with (
-            patch("openv.cli.detect_package_manager", return_value=PackageManager.BREW),
-            pytest.raises(SystemExit) as exit_info,
-        ):
+        with pytest.raises(SystemExit) as exit_info:
             _cmd_install(dotfiles=dotfiles, force=False, tool_names=["bogustool"])
 
         assert exit_info.value.code == 2

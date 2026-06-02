@@ -8,7 +8,6 @@ from pathlib import Path
 
 from .discovery import discover
 from .installer import install_tools
-from .packages import detect_package_manager
 from .selector import select_tools
 
 
@@ -22,7 +21,6 @@ class _Args(argparse.Namespace):
 def _cmd_install(dotfiles: Path, force: bool, tool_names: list[str]) -> None:
     """Discover, select, and install tools from a dotfiles repository."""
     home = Path.home()
-    pm = detect_package_manager()
 
     tools = discover(dotfiles)
     if not tools:
@@ -40,13 +38,13 @@ def _cmd_install(dotfiles: Path, force: bool, tool_names: list[str]) -> None:
             sys.exit(2)
         selected_names = tool_names
     else:
-        selected_names = select_tools(tools.values(), pm, home)
+        selected_names = select_tools(tools.values(), home)
         if not selected_names:
             print("No tools selected.")
             return
 
     selected_tools = [tools[name] for name in selected_names]
-    install_tools(selected_tools, tools, pm, home, force=force)
+    install_tools(selected_tools, tools, home, force=force)
 
 
 def _cmd_generate_bootstrap(dotfiles_url: str) -> None:

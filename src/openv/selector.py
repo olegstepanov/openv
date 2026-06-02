@@ -7,13 +7,13 @@ from typing import TYPE_CHECKING
 import questionary
 
 from . import installer
+from .packages import detect_package_manager
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
     from pathlib import Path
 
     from .discovery import ToolInfo
-    from .packages import PackageManager
 
 
 def _tool_status(tool: ToolInfo, is_installed: bool) -> str:
@@ -27,10 +27,9 @@ def _tool_status(tool: ToolInfo, is_installed: bool) -> str:
     return "partial"
 
 
-def select_tools(
-    tools: Iterable[ToolInfo], pm: PackageManager, home: Path
-) -> list[str]:
+def select_tools(tools: Iterable[ToolInfo], home: Path) -> list[str]:
     """Show an interactive checkbox selector; return selected tool names."""
+    pm = detect_package_manager()
     choices: list[questionary.Choice] = []
     for tool in tools:
         tool_is_installed = installer.is_installed(tool, pm, home)
