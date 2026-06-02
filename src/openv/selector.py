@@ -6,8 +6,9 @@ from typing import TYPE_CHECKING
 
 import questionary
 
-from . import installer
+from . import installer, packages
 from .packages import detect_package_manager
+from .stow import all_links_valid
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -16,7 +17,9 @@ if TYPE_CHECKING:
     from .discovery import ToolInfo
 
 
-def _tool_status(tool: ToolInfo, is_installed: bool) -> str:
+def _tool_status(
+    tool: ToolInfo, is_installed: bool, is_partially_installed: bool = False
+) -> str:
     """Return the short status label shown next to the tool name in the selector."""
     if is_installed:
         return "installed"
@@ -24,7 +27,22 @@ def _tool_status(tool: ToolInfo, is_installed: bool) -> str:
         return "scripts only"
     if not tool.config_files:
         return "no configs"
-    return "partial"
+    if is_partially_installed:
+        return "partial"
+    return "not installed"
+
+
+def _is_partially_installed(
+    tool: ToolInfo, pm: packages.PackageManager, home: Path
+) -> bool:
+    """Return True if packages are present but config symlinks are incomplete."""
+    return (
+        bool(tool.config_files)
+        and all(
+            packages.is_installed(pm, package) for package in tool.package_dependencies
+        )
+        and not all_links_valid(tool, home)
+    )
 
 
 def select_tools(tools: Iterable[ToolInfo], home: Path) -> list[str]:
@@ -33,13 +51,15 @@ def select_tools(tools: Iterable[ToolInfo], home: Path) -> list[str]:
     choices: list[questionary.Choice] = []
     for tool in tools:
         tool_is_installed = installer.is_installed(tool, pm, home)
-        status = _tool_status(tool, tool_is_installed)
+        tool_is_partial = not tool_is_installed and _is_partially_installed(
+            tool, pm, home
+        )
+        status = _tool_status(tool, tool_is_installed, tool_is_partial)
         label = f"{tool.name}  [{status}]"
         choice = questionary.Choice(
             title=label,
             value=tool.name,
-            checked=tool_is_installed,
-            disabled="Installed" if tool_is_installed else None,
+            checked=tool_is_installed or tool_is_partial,
         )
         choices.append(choice)
 
