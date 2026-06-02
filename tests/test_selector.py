@@ -40,7 +40,7 @@ class TestToolStatus:
     def test_not_installed_when_is_installed_false_with_configs(
         self, tmp_path: Path
     ) -> None:
-        """A tool with config files but not installed shows as 'partial'."""
+        """A tool with config files but no partial state shows as not installed."""
         config_file = _make_file(tmp_path / "zsh" / ".zshrc")
         tool = ToolInfo(
             name="zsh",
@@ -50,6 +50,20 @@ class TestToolStatus:
         )
 
         status = _tool_status(tool, is_installed=False)
+
+        assert status == "not installed"
+
+    def test_partial_when_is_partially_installed_true(self, tmp_path: Path) -> None:
+        """A tool with packages but incomplete configs shows as partial."""
+        config_file = _make_file(tmp_path / "zsh" / ".zshrc")
+        tool = ToolInfo(
+            name="zsh",
+            directory=tmp_path / "zsh",
+            package_dependencies=["zsh"],
+            config_files=[config_file],
+        )
+
+        status = _tool_status(tool, is_installed=False, is_partially_installed=True)
 
         assert status == "partial"
 
@@ -113,3 +127,63 @@ class TestSelectToolsIsInstalledCalledOnce:
             select_tools([tool], tmp_path)
 
         mock_is_installed.assert_called_once_with(tool, PackageManager.BREW, tmp_path)
+
+
+class TestSelectToolsChoices:
+    """Tests for choice defaults and availability in the selector."""
+
+    def test_installed_and_partial_tools_are_checked_and_selectable(
+        self, tmp_path: Path
+    ) -> None:
+        """Installed and partial tools are checked without disabling user changes."""
+        installed_config = _make_file(tmp_path / "installed" / ".installedrc")
+        partial_config = _make_file(tmp_path / "partial" / ".partialrc")
+        missing_config = _make_file(tmp_path / "missing" / ".missingrc")
+        tools = [
+            ToolInfo(
+                name="installed",
+                directory=tmp_path / "installed",
+                package_dependencies=["installed"],
+                config_files=[installed_config],
+            ),
+            ToolInfo(
+                name="partial",
+                directory=tmp_path / "partial",
+                package_dependencies=["partial"],
+                config_files=[partial_config],
+            ),
+            ToolInfo(
+                name="missing",
+                directory=tmp_path / "missing",
+                package_dependencies=["missing"],
+                config_files=[missing_config],
+            ),
+        ]
+
+        with (
+            patch(
+                "openv.selector.detect_package_manager",
+                return_value=PackageManager.BREW,
+            ),
+            patch(
+                "openv.selector.installer.is_installed",
+                side_effect=lambda tool, _pm, _home: tool.name == "installed",
+            ),
+            patch(
+                "openv.selector.packages.is_installed",
+                side_effect=lambda _pm, package: package == "partial",
+            ),
+            patch("openv.selector.all_links_valid", return_value=False),
+            patch("openv.selector.questionary.checkbox") as mock_checkbox,
+        ):
+            mock_checkbox.return_value.ask.return_value = None
+            select_tools(tools, tmp_path)
+
+        choices = mock_checkbox.call_args.kwargs["choices"]
+        assert [
+            (choice.title, choice.checked, choice.disabled) for choice in choices
+        ] == [
+            ("installed  [installed]", True, None),
+            ("partial  [partial]", True, None),
+            ("missing  [not installed]", False, None),
+        ]
