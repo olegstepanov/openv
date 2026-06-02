@@ -53,7 +53,7 @@
 - [x] 9.2 Implement prerequisites installation in template: platform-aware install of git + python3 + pip (python3-pip on apt/opkg, bundled with brew's Python)
 - [x] 9.3 Implement dotfiles clone step in template: abort with clear error if `$HOME/.openv` already exists
 - [x] 9.4 Implement pip install + openv invocation in template
-- [ ] 9.5 Validate generated script syntax with `sh -n bootstrap.sh`; manually verify on macOS, Ubuntu, and OpenWRT before v1 release
+- [x] 9.5 Validate generated script syntax with `sh -n bootstrap.sh`; manually verify on macOS, Ubuntu, and OpenWRT before v1 release
 
 ## 10. Unit & Integration Tests
 
