@@ -6,10 +6,10 @@ import importlib.resources
 import sys
 from pathlib import Path
 
-from openv.discovery import discover
-from openv.installer import install_tools
-from openv.packages import detect_package_manager
-from openv.selector import select_tools
+from .discovery import discover
+from .installer import install_tools
+from .packages import detect_package_manager
+from .selector import select_tools
 
 
 class _Args(argparse.Namespace):
