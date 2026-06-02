@@ -1,0 +1,25 @@
+Migration inventory:
+  active: instruction files - 2 found
+    - .claude/CLAUDE.md
+    - AGENTS.md
+  active: skills - 11 found
+    - openspec-apply-change
+    - openspec-archive-change
+    - openspec-bulk-archive-change
+    - openspec-continue-change
+    - openspec-explore
+    - openspec-ff-change
+    - openspec-new-change
+    - openspec-onboard
+    - openspec-propose
+    - openspec-sync-specs
+    - openspec-verify-change
+  inactive: command sources - none found
+  inactive: subagents - none found
+Migration surfaces:
+  active: AGENTS.md - 1 instruction file(s) found.
+  inactive: skills - Not selected by CLI flags.
+  inactive: MCP config - No settings or MCP config found.
+  inactive: subagents - Not selected by CLI flags.
+Migration report:
+  rewritten: AGENTS.md - Existing Codex instructions already present at AGENTS.md.
