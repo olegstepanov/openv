@@ -75,6 +75,7 @@ convention = "google"  # or "numpy" / "pep257"
 [tool.basedpyright]
 reportUnusedCallResult = "none"
 reportPrivateUsage = "error"
+reportMatchNotExhaustive = "error"
 include = ["src"]
 
 [tool.pydoclint]
