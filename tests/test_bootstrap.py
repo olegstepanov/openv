@@ -83,6 +83,18 @@ class TestBootstrapTemplate:
         assert result.stdout == dotfiles_url
         assert not marker.exists()
 
+    def test_installs_openv_before_cloning_dotfiles(self) -> None:
+        """Bootstrap installs pinned openv before cloning the dotfiles repository."""
+        template = (
+            importlib.resources.files("openv")
+            .joinpath("bootstrap.sh.template")
+            .read_text()
+        )
+
+        assert template.index('pip3 install "openv==$OPENV_VERSION"') < template.index(
+            'git clone "$DOTFILES_URL" "$HOME/.openv"'
+        )
+
 
 def _run_bootstrap(
     tmp_path: Path,
