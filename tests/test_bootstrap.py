@@ -83,6 +83,46 @@ class TestBootstrapTemplate:
         assert result.stdout == dotfiles_url
         assert not marker.exists()
 
+    def test_missing_package_manager_reports_error_on_stderr(
+        self, tmp_path: Path
+    ) -> None:
+        """Absent package managers fail with the error directed to stderr."""
+        bin_dir = tmp_path / "bin"
+        bin_dir.mkdir()
+        _write_stub(bin_dir, "id", 'echo "1000"\n')
+
+        result = _run_template(bin_dir, home=tmp_path / "home")
+
+        assert result.returncode != 0
+        error_message = (
+            "ERROR: No supported package manager found (brew, apt-get, opkg)."
+        )
+        assert error_message in result.stderr
+        assert error_message not in result.stdout
+
+    def test_existing_openv_directory_reports_error_on_stderr(
+        self, tmp_path: Path
+    ) -> None:
+        """An existing $HOME/.openv fails with the error directed to stderr."""
+        bin_dir = tmp_path / "bin"
+        bin_dir.mkdir()
+        home_dir = tmp_path / "home"
+        (home_dir / ".openv").mkdir(parents=True)
+
+        _write_stub(bin_dir, "id", 'echo "0"\n')
+        _write_stub(bin_dir, "apt-get", "true\n")
+        _write_stub(bin_dir, "pip3", "true\n")
+
+        result = _run_template(bin_dir, home=home_dir)
+
+        assert result.returncode != 0
+        error_message = (
+            f"ERROR: {home_dir}/.openv already exists. "
+            "Remove it before running bootstrap."
+        )
+        assert error_message in result.stderr
+        assert error_message not in result.stdout
+
     def test_installs_openv_before_cloning_dotfiles(self) -> None:
         """Bootstrap installs pinned openv before cloning the dotfiles repository."""
         template = (
@@ -134,6 +174,19 @@ def _run_bootstrap(
 
     log = log_path.read_text() if log_path.exists() else ""
     return result, log
+
+
+def _run_template(bin_dir: Path, *, home: Path) -> subprocess.CompletedProcess[str]:
+    """Execute the template with PATH and HOME pointed at the given directories."""
+    template_ref = importlib.resources.files("openv").joinpath("bootstrap.sh.template")
+    with importlib.resources.as_file(template_ref) as path:
+        return subprocess.run(  # noqa: S603
+            ["/bin/sh", str(path)],
+            check=False,
+            capture_output=True,
+            env={"HOME": str(home), "PATH": str(bin_dir)},
+            text=True,
+        )
 
 
 def _write_stub(bin_dir: Path, name: str, body: str) -> None:

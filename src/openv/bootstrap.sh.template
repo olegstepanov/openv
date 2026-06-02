@@ -19,7 +19,7 @@ detect_pkg_manager() {
 PKG_MANAGER=$(detect_pkg_manager)
 
 if [ -z "$PKG_MANAGER" ]; then
-    echo "ERROR: No supported package manager found (brew, apt-get, opkg)."
+    echo "ERROR: No supported package manager found (brew, apt-get, opkg)." >&2
     exit 1
 fi
 
@@ -55,7 +55,7 @@ install_prerequisites
 pip3 install "openv==$OPENV_VERSION"
 
 if [ -d "$HOME/.openv" ]; then
-    echo "ERROR: $HOME/.openv already exists. Remove it before running bootstrap."
+    echo "ERROR: $HOME/.openv already exists. Remove it before running bootstrap." >&2
     exit 1
 fi
 
