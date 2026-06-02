@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 from openv.discovery import ToolInfo
+from openv.packages import PackageManager
 from openv.selector import _tool_status, select_tools
 
 if TYPE_CHECKING:
@@ -97,15 +98,18 @@ class TestSelectToolsIsInstalledCalledOnce:
             package_dependencies=["zsh"],
             config_files=[config_file],
         )
-        pm = object()
 
         with (
+            patch(
+                "openv.selector.detect_package_manager",
+                return_value=PackageManager.BREW,
+            ),
             patch(
                 "openv.selector.installer.is_installed", return_value=True
             ) as mock_is_installed,
             patch("openv.selector.questionary.checkbox") as mock_checkbox,
         ):
             mock_checkbox.return_value.ask.return_value = None
-            select_tools([tool], pm, tmp_path)  # type: ignore[arg-type]
+            select_tools([tool], tmp_path)
 
-        mock_is_installed.assert_called_once_with(tool, pm, tmp_path)
+        mock_is_installed.assert_called_once_with(tool, PackageManager.BREW, tmp_path)

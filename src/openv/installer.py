@@ -9,7 +9,7 @@ from typing import cast
 from . import packages
 from .dependencies import build_tool_dependency_graph
 from .discovery import ToolInfo
-from .packages import PackageManager
+from .packages import PackageManager, detect_package_manager
 from .stow import all_links_valid, stow
 
 
@@ -88,7 +88,6 @@ def install_tool(
 def install_tools(
     selected_tools: list[ToolInfo],
     all_tools: dict[str, ToolInfo],
-    pm: PackageManager,
     home: Path,
     force: bool = False,
 ) -> None:
@@ -101,13 +100,13 @@ def install_tools(
     Args:
         selected_tools: Tools explicitly chosen by the user.
         all_tools: All tools discovered in the dotfiles repository, keyed by name.
-        pm: The package manager to use for installing packages.
         home: The user's home directory for symlinking configs.
         force: If True, re-link configs and re-run scripts even if already done.
 
     Raises:
         ValueError: If a circular dependency is detected among the tools.
     """
+    pm = detect_package_manager()
     # Expand selected tools to include transitive tool dependencies
     tools_to_install: dict[str, ToolInfo] = {}
     pending = list(selected_tools)
