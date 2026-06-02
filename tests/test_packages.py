@@ -54,9 +54,9 @@ class TestDetectPackageManager:
         with _patch_which("brew", "/usr/local/bin/brew"):
             assert detect_package_manager() is PackageManager.BREW
 
-    def test_returns_apt_when_apt_on_path(self) -> None:
-        """detect_package_manager() returns APT when only apt is on PATH."""
-        with _patch_which("apt", "/usr/bin/apt"):
+    def test_returns_apt_when_apt_get_on_path(self) -> None:
+        """detect_package_manager() returns APT when only apt-get is on PATH."""
+        with _patch_which("apt-get", "/usr/bin/apt-get"):
             assert detect_package_manager() is PackageManager.APT
 
     def test_returns_opkg_when_opkg_on_path(self) -> None:
