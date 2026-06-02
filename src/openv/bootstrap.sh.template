@@ -52,13 +52,13 @@ run_as_root() {
 
 install_prerequisites
 
+pip3 install "openv==$OPENV_VERSION"
+
 if [ -d "$HOME/.openv" ]; then
     echo "ERROR: $HOME/.openv already exists. Remove it before running bootstrap."
     exit 1
 fi
 
 git clone "$DOTFILES_URL" "$HOME/.openv"
-
-pip3 install "openv==$OPENV_VERSION"
 
 openv install
