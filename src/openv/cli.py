@@ -8,7 +8,7 @@ from pathlib import Path
 
 from openv.discovery import discover
 from openv.installer import install_tools
-from openv.packages import detect
+from openv.packages import detect_package_manager
 from openv.selector import select_tools
 
 
@@ -22,7 +22,7 @@ class _Args(argparse.Namespace):
 def _cmd_install(dotfiles: Path, force: bool, tool_names: list[str]) -> None:
     """Discover, select, and install tools from a dotfiles repository."""
     home = Path.home()
-    pm = detect()
+    pm = detect_package_manager()
 
     tools = discover(dotfiles)
     if not tools:

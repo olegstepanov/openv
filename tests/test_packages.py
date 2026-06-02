@@ -11,7 +11,7 @@ import pytest
 from openv.packages import (
     InstallationError,
     PackageManager,
-    detect,
+    detect_package_manager,
     install_package,
     is_installed,
 )
@@ -46,31 +46,31 @@ def _patch_subprocess_run(
     )
 
 
-class TestDetect:
-    """Tests for detect()."""
+class TestDetectPackageManager:
+    """Tests for detect_package_manager()."""
 
     def test_returns_brew_when_brew_on_path(self) -> None:
-        """detect() returns BREW when only brew is on PATH."""
+        """detect_package_manager() returns BREW when only brew is on PATH."""
         with _patch_which("brew", "/usr/local/bin/brew"):
-            assert detect() is PackageManager.BREW
+            assert detect_package_manager() is PackageManager.BREW
 
     def test_returns_apt_when_apt_on_path(self) -> None:
-        """detect() returns APT when only apt is on PATH."""
+        """detect_package_manager() returns APT when only apt is on PATH."""
         with _patch_which("apt", "/usr/bin/apt"):
-            assert detect() is PackageManager.APT
+            assert detect_package_manager() is PackageManager.APT
 
     def test_returns_opkg_when_opkg_on_path(self) -> None:
-        """detect() returns OPKG when only opkg is on PATH."""
+        """detect_package_manager() returns OPKG when only opkg is on PATH."""
         with _patch_which("opkg", "/usr/bin/opkg"):
-            assert detect() is PackageManager.OPKG
+            assert detect_package_manager() is PackageManager.OPKG
 
     def test_raises_when_no_package_manager_found(self) -> None:
-        """detect() raises RuntimeError when no manager is on PATH."""
+        """detect_package_manager() raises RuntimeError when no manager is on PATH."""
         with (
             _patch_which(),
             pytest.raises(RuntimeError, match="No supported package manager"),
         ):
-            detect()
+            detect_package_manager()
 
 
 class TestIsInstalled:
