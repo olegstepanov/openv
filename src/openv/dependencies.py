@@ -34,10 +34,14 @@ def _parse_shebang(script: Path) -> str | None:
         return None
 
     executable = parts[0]
-    if executable.endswith("/env") and len(parts) >= 2:
-        return parts[1]
-    else:
-        return Path(executable).name
+    if executable.endswith("/env"):
+        # Skip env's own flags (e.g. `-S`, `-i`) and return the first non-flag
+        # token, which is the interpreter name.
+        for token in parts[1:]:
+            if not token.startswith("-"):
+                return token
+        return None
+    return Path(executable).name
 
 
 def get_script_dependencies(script: Path) -> list[str]:

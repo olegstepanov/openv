@@ -4,10 +4,56 @@ from pathlib import Path
 
 import pytest
 
-from openv.dependencies import build_tool_dependency_graph
+from openv.dependencies import build_tool_dependency_graph, get_script_dependencies
 from openv.discovery import ToolInfo
 from openv.installer import install_tools
 from openv.packages import PackageManager
+
+
+def _write_script(path: Path, content: str) -> Path:
+    """Write a script at `path`, creating parents."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content)
+    return path
+
+
+class TestGetScriptDependencies:
+    """Tests for shebang-based interpreter→package inference."""
+
+    def test_direct_bash_shebang_infers_bash(self, tmp_path: Path) -> None:
+        """`#!/bin/bash` infers the `bash` package dependency."""
+        script = _write_script(tmp_path / "install.sh", "#!/bin/bash\nexit 0\n")
+        assert get_script_dependencies(script) == ["bash"]
+
+    def test_env_bash_shebang_infers_bash(self, tmp_path: Path) -> None:
+        """`#!/usr/bin/env bash` infers the `bash` package dependency."""
+        script = _write_script(tmp_path / "install.sh", "#!/usr/bin/env bash\n")
+        assert get_script_dependencies(script) == ["bash"]
+
+    def test_env_with_dash_s_flag_still_resolves_bash(self, tmp_path: Path) -> None:
+        """`#!/usr/bin/env -S bash` skips the `-S` flag and resolves bash."""
+        script = _write_script(tmp_path / "install.sh", "#!/usr/bin/env -S bash\n")
+        assert get_script_dependencies(script) == ["bash"]
+
+    def test_unrecognized_interpreter_infers_nothing(self, tmp_path: Path) -> None:
+        """A shebang for an interpreter not in the map infers nothing."""
+        script = _write_script(tmp_path / "install.sh", "#!/bin/sh\n")
+        assert get_script_dependencies(script) == []
+
+    def test_env_python3_infers_no_dependency_in_v1(self, tmp_path: Path) -> None:
+        """env-style shebang for python3 infers nothing while only bash is mapped."""
+        script = _write_script(tmp_path / "install.sh", "#!/usr/bin/env python3\n")
+        assert get_script_dependencies(script) == []
+
+    def test_no_shebang_infers_no_dependency(self, tmp_path: Path) -> None:
+        """A script without a shebang line infers nothing."""
+        script = _write_script(tmp_path / "install.sh", "echo hello\n")
+        assert get_script_dependencies(script) == []
+
+    def test_empty_file_infers_no_dependency(self, tmp_path: Path) -> None:
+        """An empty script infers nothing."""
+        script = _write_script(tmp_path / "install.sh", "")
+        assert get_script_dependencies(script) == []
 
 
 def _make_tool(name: str, package_dependencies: list[str] | None = None) -> ToolInfo:
