@@ -10,7 +10,6 @@ requires-python = ">=3.11"
 license = { text = "MIT" }
 dependencies = [
     "questionary>=2.0",
-    "rich>=13.0",
 ]
 
 [project.scripts]

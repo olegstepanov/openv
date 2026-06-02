@@ -16,7 +16,7 @@ Run `/opsx:apply` to begin implementing.
 
 - Python 3.11+
 - `pyproject.toml` packaging with `openv` CLI entry point
-- Dependencies: `questionary`, `rich`
+- Dependencies: `questionary`
 - POSIX sh for the generated bootstrap script template
 
 ## Project commands
