@@ -11,7 +11,7 @@ def expected_links(tool: ToolInfo, home: Path) -> list[tuple[Path, Path]]:
     for config_file in tool.config_files:
         rel = config_file.relative_to(tool.directory)
         link_path = home / rel
-        links.append((link_path, config_file))
+        links.append((link_path, config_file.resolve()))
     return links
 
 
