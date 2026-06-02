@@ -42,6 +42,13 @@ class TestBootstrapTemplate:
         assert "opkg update" in log
         assert "opkg install git python3 python3-pip" in log
 
+    def test_homebrew_install_does_not_require_sudo(self, tmp_path: Path) -> None:
+        """Homebrew environments install prerequisites without sudo."""
+        result, log = _run_bootstrap(tmp_path, user_id=1000, package_manager="brew")
+
+        assert result.returncode == 0
+        assert "brew install git python3" in log
+
     def test_non_root_install_uses_sudo_when_available(self, tmp_path: Path) -> None:
         """Non-root environments delegate privileged commands to sudo."""
         result, log = _run_bootstrap(tmp_path, user_id=1000, include_sudo=True)
