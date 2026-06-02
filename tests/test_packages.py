@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import subprocess
-from contextlib import AbstractContextManager
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
@@ -19,6 +18,7 @@ from openv.packages import (
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+    from contextlib import AbstractContextManager
 
 
 def _make_completed_process(
