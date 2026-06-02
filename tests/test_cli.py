@@ -25,7 +25,7 @@ class TestCliUnknownToolError:
         (dotfiles / "zsh").mkdir(parents=True)
 
         with (
-            patch("openv.cli.detect", return_value=PackageManager.BREW),
+            patch("openv.cli.detect_package_manager", return_value=PackageManager.BREW),
             pytest.raises(SystemExit) as exit_info,
         ):
             _cmd_install(dotfiles=dotfiles, force=False, tool_names=["bogustool"])
