@@ -54,8 +54,13 @@ def _cmd_generate_bootstrap(dotfiles_url: str) -> None:
     )
     version = importlib.metadata.version("openv")
     output = template.replace("{{OPENV_VERSION}}", version)
-    output = output.replace("{{DOTFILES_URL}}", dotfiles_url)
+    output = output.replace('"{{DOTFILES_URL}}"', _shell_quote(dotfiles_url))
     sys.stdout.write(output)
+
+
+def _shell_quote(value: str) -> str:
+    """Return value as a single-quoted POSIX shell word."""
+    return "'" + value.replace("'", "'\"'\"'") + "'"
 
 
 def main() -> None:

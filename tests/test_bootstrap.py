@@ -7,8 +7,12 @@ import stat
 import subprocess
 from typing import TYPE_CHECKING
 
+from openv.cli import _cmd_generate_bootstrap
+
 if TYPE_CHECKING:
     from pathlib import Path
+
+    import pytest
 
 
 class TestBootstrapTemplate:
@@ -56,6 +60,28 @@ class TestBootstrapTemplate:
             "ERROR: Root privileges are required to install prerequisites. "
             "Run as root or install sudo."
         ) in result.stderr
+
+    def test_generated_dotfiles_url_is_shell_quoted(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """The generated assignment treats shell syntax in the URL as data."""
+        marker = tmp_path / "command-substitution-ran"
+        dotfiles_url = f"https://example.invalid/it's/$(touch {marker})"
+
+        _cmd_generate_bootstrap(dotfiles_url)
+
+        output = capsys.readouterr().out
+        assignment = next(
+            line for line in output.splitlines() if line.startswith("DOTFILES_URL=")
+        )
+        result = subprocess.run(  # noqa: S603
+            ["sh", "-c", f"{assignment}\nprintf '%s' \"$DOTFILES_URL\""],  # noqa: S607
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        assert result.stdout == dotfiles_url
+        assert not marker.exists()
 
 
 def _run_bootstrap(
