@@ -22,7 +22,7 @@ class InstallationError(Exception):
         super().__init__(f'Error installing package "{package}"')
 
 
-def detect() -> PackageManager:
+def detect_package_manager() -> PackageManager:
     """Detect the platform's package manager from PATH; raise if none found."""
     for pm in (PackageManager.BREW, PackageManager.APT, PackageManager.OPKG):
         if shutil.which(pm.value):
