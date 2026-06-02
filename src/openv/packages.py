@@ -11,7 +11,7 @@ class PackageManager(Enum):
     """Supported platform package managers."""
 
     BREW = "brew"
-    APT = "apt"
+    APT = "apt-get"
     OPKG = "opkg"
 
 
