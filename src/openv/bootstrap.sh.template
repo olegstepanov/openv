@@ -29,14 +29,25 @@ install_prerequisites() {
             brew install git python3
             ;;
         apt-get)
-            sudo apt-get update -y
-            sudo apt-get install -y git python3 python3-pip
+            run_as_root apt-get update -y
+            run_as_root apt-get install -y git python3 python3-pip
             ;;
         opkg)
-            sudo opkg update
-            sudo opkg install git python3 python3-pip
+            run_as_root opkg update
+            run_as_root opkg install git python3 python3-pip
             ;;
     esac
+}
+
+run_as_root() {
+    if [ "$(id -u)" = "0" ]; then
+        "$@"
+    elif command -v sudo > /dev/null 2>&1; then
+        sudo "$@"
+    else
+        echo "ERROR: Root privileges are required to install prerequisites. Run as root or install sudo." >&2
+        exit 1
+    fi
 }
 
 install_prerequisites
