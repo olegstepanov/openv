@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from openv.discovery import ToolInfo
-from openv.stow import stow
+from openv.stow import all_links_valid, stow
 
 
 def _make_file(path: Path, content: str = "") -> Path:
@@ -61,6 +61,21 @@ class TestStowNormalCreation:
         stow(tool, home)
         assert (home / ".gitconfig").is_symlink()
         assert (home / ".gitignore_global").is_symlink()
+
+    def test_relative_tool_directory_creates_valid_symlink(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """stow() resolves relative config targets before linking them under home."""
+        monkeypatch.chdir(tmp_path)
+        dotfiles = Path("dotfiles")
+        home = tmp_path / "home"
+        home.mkdir()
+        tool = _make_tool(dotfiles, "zsh", [".zshrc"])
+        stow(tool, home)
+        link = home / ".zshrc"
+        assert link.is_symlink()
+        assert link.resolve() == (dotfiles / "zsh" / ".zshrc").resolve()
+        assert all_links_valid(tool, home)
 
 
 class TestStowIdempotency:
