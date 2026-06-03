@@ -10,7 +10,9 @@ from . import dependencies
 if TYPE_CHECKING:
     from pathlib import Path
 
-_SCRIPT_NAMES = {"install.sh", "post-install.sh"}
+INSTALL_SCRIPT = "install.sh"
+POST_INSTALL_SCRIPT = "post-install.sh"
+SCRIPT_NAMES = frozenset({INSTALL_SCRIPT, POST_INSTALL_SCRIPT})
 
 
 @dataclass
@@ -52,13 +54,13 @@ def _create_tool_from_directory(directory: Path) -> ToolInfo:
             raise ValueError(f"Script {path} must either be a file or be absent.")
         return path
 
-    install_script = check_script("install.sh")
-    post_install_script = check_script("post-install.sh")
+    install_script = check_script(INSTALL_SCRIPT)
+    post_install_script = check_script(POST_INSTALL_SCRIPT)
     config_files = [
         entry
         for entry in directory.rglob("*")
         if entry.is_file()
-        and not (entry.parent == directory and entry.name in _SCRIPT_NAMES)
+        and not (entry.parent == directory and entry.name in SCRIPT_NAMES)
     ]
 
     # Implicit dependency on package with the same name
