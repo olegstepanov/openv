@@ -24,8 +24,8 @@ Use the following Makefile targets:
 ## Git Workflow
 
 - Always create a feature branch before starting new work
-- Branch naming: `feature/<short-description>`, `fix/<issue-id>`, `chore/<task>`
 - Never commit directly to `main`
+- Branch naming: `feature/<short-description>`, `fix/<issue-id>`, `chore/<task>`, `refactor/<short-description>`
 - Use conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`
 - Make sure branch is up-to-date before pushing
-- Open a PR with auto merge (`--auto`) when the feature is complete
+- Alwsys create a PR without auto-merge
