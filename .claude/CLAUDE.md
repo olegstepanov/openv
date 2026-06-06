@@ -4,11 +4,7 @@
 
 This repository contains **openv** (Oleg's Portable Environment) — a pip-installable CLI tool for bootstrapping a personal UNIX environment on a new machine.
 
-The implementation lives in `src/openv/`, with tests in `tests/`. The original design artifacts are kept in `openspec/changes/create-openv/` for reference:
-- `proposal.md` — what and why
-- `design.md` — key technical decisions
-- `specs/` — per-capability requirements
-- `tasks.md` — implementation checklist
+The implementation lives in `src/openv/`, with tests in `tests/`. Design artifacts are kept in `openspec`.
 
 ## Tech stack
 
