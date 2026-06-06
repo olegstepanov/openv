@@ -1,14 +1,10 @@
-# Instructions for Codex
+# Instructions for Claude
 
 ## Project
 
 This repository contains **openv** (Oleg's Portable Environment) — a pip-installable CLI tool for bootstrapping a personal UNIX environment on a new machine.
 
-The implementation lives in `src/openv/`, with tests in `tests/`. The original design artifacts are kept in `openspec/changes/create-openv/` for reference:
-- `proposal.md` — what and why
-- `design.md` — key technical decisions
-- `specs/` — per-capability requirements
-- `tasks.md` — implementation checklist
+The implementation lives in `src/openv/`, with tests in `tests/`. Design artifacts are kept in `openspec`.
 
 ## Tech stack
 
@@ -28,8 +24,8 @@ Use the following Makefile targets:
 ## Git Workflow
 
 - Always create a feature branch before starting new work
-- Branch naming: `feature/<short-description>`, `fix/<issue-id>`, `chore/<task>`
 - Never commit directly to `main`
+- Branch naming: `feature/<short-description>`, `fix/<issue-id>`, `chore/<task>`, `refactor/<short-description>`
 - Use conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`
 - Make sure branch is up-to-date before pushing
-- Open a PR with auto merge (`--auto`) when the feature is complete
+- Alwsys create a PR without auto-merge
