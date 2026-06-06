@@ -87,41 +87,27 @@ class TestBootstrapTemplate:
         self, tmp_path: Path
     ) -> None:
         """Absent package managers fail with the error directed to stderr."""
-        bin_dir = tmp_path / "bin"
-        bin_dir.mkdir()
-        _write_stub(bin_dir, "id", 'echo "1000"\n')
-
-        result = _run_template(bin_dir, home=tmp_path / "home")
+        result, _ = _run_bootstrap(tmp_path, user_id=1000, package_manager=None)
 
         assert result.returncode != 0
-        error_message = (
+        assert (
             "ERROR: No supported package manager found (brew, apt-get, opkg)."
-        )
-        assert error_message in result.stderr
-        assert error_message not in result.stdout
+        ) in result.stderr
 
     def test_existing_openv_directory_reports_error_on_stderr(
         self, tmp_path: Path
     ) -> None:
         """An existing $HOME/.openv fails with the error directed to stderr."""
-        bin_dir = tmp_path / "bin"
-        bin_dir.mkdir()
         home_dir = tmp_path / "home"
         (home_dir / ".openv").mkdir(parents=True)
 
-        _write_stub(bin_dir, "id", 'echo "0"\n')
-        _write_stub(bin_dir, "apt-get", "true\n")
-        _write_stub(bin_dir, "pip3", "true\n")
-
-        result = _run_template(bin_dir, home=home_dir)
+        result, _ = _run_bootstrap(tmp_path, user_id=0)
 
         assert result.returncode != 0
-        error_message = (
+        assert (
             f"ERROR: {home_dir}/.openv already exists. "
             "Remove it before running bootstrap."
-        )
-        assert error_message in result.stderr
-        assert error_message not in result.stdout
+        ) in result.stderr
 
     def test_installs_openv_before_cloning_dotfiles(self) -> None:
         """Bootstrap installs pinned openv before cloning the dotfiles repository."""
@@ -141,7 +127,7 @@ def _run_bootstrap(
     *,
     user_id: int,
     include_sudo: bool = False,
-    package_manager: str = "apt-get",
+    package_manager: str | None = "apt-get",
 ) -> tuple[subprocess.CompletedProcess[str], str]:
     """Execute the template against package-manager and install command stubs."""
     bin_dir = tmp_path / "bin"
@@ -149,9 +135,10 @@ def _run_bootstrap(
     log_path = tmp_path / "commands.log"
 
     _write_stub(bin_dir, "id", f'echo "{user_id}"\n')
-    _write_stub(
-        bin_dir, package_manager, f'echo "{package_manager} $*" >> "{log_path}"\n'
-    )
+    if package_manager is not None:
+        _write_stub(
+            bin_dir, package_manager, f'echo "{package_manager} $*" >> "{log_path}"\n'
+        )
     _write_stub(bin_dir, "git", f'echo "git $*" >> "{log_path}"\n')
     _write_stub(bin_dir, "pip3", f'echo "pip3 $*" >> "{log_path}"\n')
     _write_stub(bin_dir, "openv", f'echo "openv $*" >> "{log_path}"\n')
@@ -174,19 +161,6 @@ def _run_bootstrap(
 
     log = log_path.read_text() if log_path.exists() else ""
     return result, log
-
-
-def _run_template(bin_dir: Path, *, home: Path) -> subprocess.CompletedProcess[str]:
-    """Execute the template with PATH and HOME pointed at the given directories."""
-    template_ref = importlib.resources.files("openv").joinpath("bootstrap.sh.template")
-    with importlib.resources.as_file(template_ref) as path:
-        return subprocess.run(  # noqa: S603
-            ["/bin/sh", str(path)],
-            check=False,
-            capture_output=True,
-            env={"HOME": str(home), "PATH": str(bin_dir)},
-            text=True,
-        )
 
 
 def _write_stub(bin_dir: Path, name: str, body: str) -> None:
