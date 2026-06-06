@@ -91,3 +91,20 @@ class TestCreateToolFromDirectory:
         (tmp_path / "zsh").mkdir()
         tool = self._discover_single(tmp_path, "zsh")
         assert "zsh" in tool.package_dependencies
+
+    def test_shebang_infers_package_dependency(self, tmp_path: Path) -> None:
+        """A recognised install.sh shebang adds the inferred package dependency."""
+        _make_file(tmp_path / "zsh" / "install.sh", "#!/bin/bash\necho install\n")
+        tool = self._discover_single(tmp_path, "zsh")
+        assert "zsh" in tool.package_dependencies
+        assert "bash" in tool.package_dependencies
+
+    def test_unrecognised_shebang_adds_no_package_dependency(
+        self, tmp_path: Path
+    ) -> None:
+        """An install.sh shebang with no mapping adds only the implicit dependency."""
+        _make_file(
+            tmp_path / "zsh" / "install.sh", "#!/usr/bin/env python3\nprint('hi')\n"
+        )
+        tool = self._discover_single(tmp_path, "zsh")
+        assert tool.package_dependencies == ["zsh"]
