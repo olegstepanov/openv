@@ -177,31 +177,9 @@ class TestBootstrapTemplate:
         )
 
 
-# Stub command bodies, kept identical across tests so each is assessed once per
-# session (see the ``assessed_master`` fixture in conftest.py). Per-test data is
-# passed through the STUB_* environment variables rather than baked into the body.
-# The generic logger derives the invoked command name from ``$0`` via POSIX
-# parameter expansion (``${0##*/}``), so a single master can stand in for git,
-# pip3, the package managers, etc. without needing basename on the restricted PATH.
-_LOGGER_STUB = '#!/bin/sh\necho "${0##*/} $*" >> "$STUB_LOG"\n'
-_ID_STUB = '#!/bin/sh\necho "${STUB_UID:-0}"\n'
-_UNAME_STUB = '#!/bin/sh\necho "${STUB_UNAME:-Linux}"\n'
-_SUDO_STUB = '#!/bin/sh\necho "sudo $*" >> "$STUB_LOG"\nexec "$@"\n'
-# curl emits a Homebrew installer that logs and creates ``brew`` as a symlink to a
-# pre-assessed master (rather than write+chmod, which would re-incur the macOS
-# first-exec penalty). It uses absolute /bin/ln since only the stub bin dir is on
-# PATH, and relies on the STUB_* variables inherited by the installer's shell.
-_CURL_STUB = (
-    "#!/bin/sh\n"
-    "printf '%s\\n' "
-    '\'echo "homebrew installer" >> "$STUB_LOG"\' '
-    '\'/bin/ln -s "$STUB_BREW_MASTER" "$STUB_BIN/brew"\'\n'
-)
-
-
 def _run_bootstrap(
     tmp_path: Path,
-    assessed_master: Callable[[str], Path],
+    script_factory: Callable[[str], Path],
     *,
     user_id: int,
     include_sudo: bool = False,
@@ -214,17 +192,21 @@ def _run_bootstrap(
     bin_dir.mkdir()
     log_path = tmp_path / "commands.log"
 
-    logger = assessed_master(_LOGGER_STUB)
-    (bin_dir / "id").symlink_to(assessed_master(_ID_STUB))
+    logger = script_factory('#!/bin/sh\necho "${0##*/} $*" >> "$STUB_LOG"\n')
+    (bin_dir / "id").symlink_to(script_factory('#!/bin/sh\necho "${STUB_UID:-0}"\n'))
     (bin_dir / "git").symlink_to(logger)
     (bin_dir / "pip3").symlink_to(logger)
     (bin_dir / "openv").symlink_to(logger)
     if uname_system is not None:
-        (bin_dir / "uname").symlink_to(assessed_master(_UNAME_STUB))
+        (bin_dir / "uname").symlink_to(
+            script_factory('#!/bin/sh\necho "${STUB_UNAME:-Linux}"\n')
+        )
     if package_manager is not None:
         (bin_dir / package_manager).symlink_to(logger)
     if include_sudo:
-        (bin_dir / "sudo").symlink_to(assessed_master(_SUDO_STUB))
+        (bin_dir / "sudo").symlink_to(
+            script_factory('#!/bin/sh\necho "sudo $*" >> "$STUB_LOG"\nexec "$@"\n')
+        )
 
     env = {
         "HOME": str(tmp_path / "home"),
@@ -235,7 +217,14 @@ def _run_bootstrap(
     if uname_system is not None:
         env["STUB_UNAME"] = uname_system
     if include_homebrew_installer:
-        (bin_dir / "curl").symlink_to(assessed_master(_CURL_STUB))
+        (bin_dir / "curl").symlink_to(
+            script_factory(
+                "#!/bin/sh\n"
+                "printf '%s\\n' "
+                '\'echo "homebrew installer" >> "$STUB_LOG"\' '
+                '\'/bin/ln -s "$STUB_BREW_MASTER" "$STUB_BIN/brew"\'\n'
+            )
+        )
         env["STUB_BIN"] = str(bin_dir)
         env["STUB_BREW_MASTER"] = str(logger)
 
