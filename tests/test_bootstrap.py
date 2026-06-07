@@ -128,6 +128,32 @@ class TestBootstrapTemplate:
             "Remove it before running bootstrap."
         ) in result.stderr
 
+    def test_missing_package_manager_reports_error_on_stderr(
+        self, tmp_path: Path
+    ) -> None:
+        """Absent package managers fail with the error directed to stderr."""
+        result, _ = _run_bootstrap(tmp_path, user_id=1000, package_manager=None)
+
+        assert result.returncode != 0
+        assert (
+            "ERROR: No supported package manager found (brew, apt-get, opkg)."
+        ) in result.stderr
+
+    def test_existing_openv_directory_reports_error_on_stderr(
+        self, tmp_path: Path
+    ) -> None:
+        """An existing $HOME/.openv fails with the error directed to stderr."""
+        home_dir = tmp_path / "home"
+        (home_dir / ".openv").mkdir(parents=True)
+
+        result, _ = _run_bootstrap(tmp_path, user_id=0)
+
+        assert result.returncode != 0
+        assert (
+            f"ERROR: {home_dir}/.openv already exists. "
+            "Remove it before running bootstrap."
+        ) in result.stderr
+
     def test_installs_openv_before_cloning_dotfiles(self) -> None:
         """Bootstrap installs pinned openv before cloning the dotfiles repository."""
         template = (
