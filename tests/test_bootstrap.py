@@ -48,7 +48,24 @@ class TestBootstrapTemplate:
         result, log = _run_bootstrap(tmp_path, user_id=1000, package_manager="brew")
 
         assert result.returncode == 0
+        assert "homebrew installer" not in log
         assert "brew install git python3" in log
+
+    def test_macos_without_package_manager_installs_homebrew(
+        self, tmp_path: Path
+    ) -> None:
+        """Darwin environments without brew install Homebrew before prerequisites."""
+        result, log = _run_bootstrap(
+            tmp_path,
+            user_id=1000,
+            package_manager=None,
+            uname_system="Darwin",
+            include_homebrew_installer=True,
+        )
+
+        assert result.returncode == 0
+        assert "homebrew installer" in log
+        assert log.index("homebrew installer") < log.index("brew install git python3")
 
     def test_non_root_install_uses_sudo_when_available(self, tmp_path: Path) -> None:
         """Non-root environments delegate privileged commands to sudo."""
@@ -147,6 +164,8 @@ def _run_bootstrap(
     user_id: int,
     include_sudo: bool = False,
     package_manager: str | None = "apt-get",
+    uname_system: str | None = None,
+    include_homebrew_installer: bool = False,
 ) -> tuple[subprocess.CompletedProcess[str], str]:
     """Execute the template against package-manager and install command stubs."""
     bin_dir = tmp_path / "bin"
@@ -154,10 +173,14 @@ def _run_bootstrap(
     log_path = tmp_path / "commands.log"
 
     _write_stub(bin_dir, "id", f'echo "{user_id}"\n')
+    if uname_system is not None:
+        _write_stub(bin_dir, "uname", f'echo "{uname_system}"\n')
     if package_manager is not None:
         _write_stub(
             bin_dir, package_manager, f'echo "{package_manager} $*" >> "{log_path}"\n'
         )
+    if include_homebrew_installer:
+        _write_homebrew_installer_stub(bin_dir, log_path)
     _write_stub(bin_dir, "git", f'echo "git $*" >> "{log_path}"\n')
     _write_stub(bin_dir, "pip3", f'echo "pip3 $*" >> "{log_path}"\n')
     _write_stub(bin_dir, "openv", f'echo "openv $*" >> "{log_path}"\n')
@@ -187,3 +210,15 @@ def _write_stub(bin_dir: Path, name: str, body: str) -> None:
     path = bin_dir / name
     path.write_text(f"#!/bin/sh\n{body}")
     path.chmod(path.stat().st_mode | stat.S_IXUSR)
+
+
+def _write_homebrew_installer_stub(bin_dir: Path, log_path: Path) -> None:
+    """Create a curl stub that emits a fake Homebrew installer."""
+    brew_path = bin_dir / "brew"
+    installer = f"""#!/bin/sh
+echo "homebrew installer" >> "{log_path}"
+printf '%s\\n' '#!/bin/sh' 'echo "brew $*" >> "{log_path}"' > "{brew_path}"
+/bin/chmod +x "{brew_path}"
+"""
+    escaped_installer = installer.replace("'", "'\"'\"'")
+    _write_stub(bin_dir, "curl", f"printf '%s' '{escaped_installer}'\n")

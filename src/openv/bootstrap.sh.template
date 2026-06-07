@@ -4,6 +4,17 @@ set -e
 OPENV_VERSION="{{OPENV_VERSION}}"
 DOTFILES_URL="{{DOTFILES_URL}}"
 
+run_as_root() {
+    if [ "$(id -u)" = "0" ]; then
+        "$@"
+    elif command -v sudo > /dev/null 2>&1; then
+        sudo "$@"
+    else
+        echo "ERROR: Root privileges are required to install prerequisites. Run as root or install sudo." >&2
+        exit 1
+    fi
+}
+
 detect_pkg_manager() {
     if command -v brew > /dev/null 2>&1; then
         echo "brew"
@@ -16,12 +27,35 @@ detect_pkg_manager() {
     fi
 }
 
-PKG_MANAGER=$(detect_pkg_manager)
+install_homebrew_on_macos() {
+    if ! command -v curl > /dev/null 2>&1; then
+        echo "ERROR: curl is required to install Homebrew on macOS." >&2
+        exit 1
+    fi
 
-if [ -z "$PKG_MANAGER" ]; then
-    echo "ERROR: No supported package manager found (brew, apt-get, opkg)." >&2
-    exit 1
-fi
+    if [ ! -x /bin/bash ]; then
+        echo "ERROR: /bin/bash is required to install Homebrew on macOS." >&2
+        exit 1
+    fi
+
+    echo "Installing Homebrew..." >&2
+    NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+    if ! command -v brew > /dev/null 2>&1; then
+        if [ -x /opt/homebrew/bin/brew ]; then
+            eval "$(/opt/homebrew/bin/brew shellenv)"
+        elif [ -x /usr/local/bin/brew ]; then
+            eval "$(/usr/local/bin/brew shellenv)"
+        fi
+    fi
+
+    if command -v brew > /dev/null 2>&1; then
+        PKG_MANAGER="brew"
+    else
+        echo "ERROR: Homebrew installation completed, but brew was not found on PATH." >&2
+        exit 1
+    fi
+}
 
 install_prerequisites() {
     case "$PKG_MANAGER" in
@@ -39,26 +73,28 @@ install_prerequisites() {
     esac
 }
 
-run_as_root() {
-    if [ "$(id -u)" = "0" ]; then
-        "$@"
-    elif command -v sudo > /dev/null 2>&1; then
-        sudo "$@"
-    else
-        echo "ERROR: Root privileges are required to install prerequisites. Run as root or install sudo." >&2
+install_openv() {
+    pip3 install "openv==$OPENV_VERSION"
+
+    if [ -d "$HOME/.openv" ]; then
+        echo "ERROR: $HOME/.openv already exists. Remove it before running bootstrap." >&2
         exit 1
     fi
+
+    git clone "$DOTFILES_URL" "$HOME/.openv"
+    openv install
 }
 
-install_prerequisites
+PKG_MANAGER=$(detect_pkg_manager)
 
-pip3 install "openv==$OPENV_VERSION"
+if [ -z "$PKG_MANAGER" ] && [ "$(uname -s)" = "Darwin" ]; then
+    install_homebrew_on_macos
+fi
 
-if [ -d "$HOME/.openv" ]; then
-    echo "ERROR: $HOME/.openv already exists. Remove it before running bootstrap." >&2
+if [ -z "$PKG_MANAGER" ]; then
+    echo "ERROR: No supported package manager found (brew, apt-get, opkg)." >&2
     exit 1
 fi
 
-git clone "$DOTFILES_URL" "$HOME/.openv"
-
-openv install
+install_prerequisites
+install_openv
