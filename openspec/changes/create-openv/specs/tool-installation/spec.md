@@ -53,11 +53,15 @@ openv SHALL skip package installation for a tool if the package is already insta
 - **THEN** openv aborts immediately with an error and does not proceed to scripts or linking
 
 ### Requirement: Config linking is idempotent by default
-openv SHALL skip the entire tool installation — package install, scripts, and config linking — if all expected config symlinks already exist and point to the correct targets. When `--force` is passed, openv SHALL re-link configs and re-run scripts regardless.
+openv SHALL skip the entire tool installation — package install, scripts, and config linking — only if all of the tool's packages are already installed AND all expected config symlinks already exist and point to the correct targets. When `--force` is passed, openv SHALL re-link configs and re-run scripts regardless.
 
 #### Scenario: All symlinks already valid
 - **WHEN** all config symlinks for a tool exist and point to the correct files
 - **THEN** openv skips the tool entirely: scripts are not run, configs are not re-linked
+
+#### Scenario: Symlinks valid but a package is missing
+- **WHEN** all config symlinks for a tool are valid but one of its packages is not installed
+- **THEN** openv does not skip the tool: it installs the missing package, runs install.sh, re-links configs (existing valid symlinks are left in place), and runs post-install.sh
 
 #### Scenario: Partial link — some symlinks missing
 - **WHEN** some but not all symlinks for a tool are present
