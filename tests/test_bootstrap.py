@@ -6,6 +6,7 @@ import importlib.resources
 import stat
 import subprocess
 from typing import TYPE_CHECKING
+from unittest.mock import patch
 
 from openv.cli import _cmd_generate_bootstrap
 
@@ -89,6 +90,17 @@ class TestBootstrapTemplate:
         )
         assert result.stdout == dotfiles_url
         assert not marker.exists()
+
+    def test_generated_output_substitutes_openv_version(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """The installed openv version replaces the template placeholder."""
+        with patch("openv.cli.importlib.metadata.version", return_value="1.2.3"):
+            _cmd_generate_bootstrap("https://example.invalid/dotfiles.git")
+
+        output = capsys.readouterr().out
+        assert 'OPENV_VERSION="1.2.3"' in output
+        assert "{{OPENV_VERSION}}" not in output
 
     def test_missing_package_manager_reports_error_on_stderr(
         self, tmp_path: Path
