@@ -36,6 +36,10 @@ When run on a new machine, the generated script SHALL detect the platform's pack
 - **WHEN** the script runs on macOS with Homebrew present
 - **THEN** it runs `brew install git python3` (pip is bundled with brew's Python)
 
+#### Scenario: Installs Homebrew on macOS when no package manager is detected
+- **WHEN** the script runs on macOS and package manager detection returns empty
+- **THEN** it installs Homebrew, sets the package manager to `brew`, and runs `brew install git python3`
+
 #### Scenario: Installs prerequisites on OpenWRT
 - **WHEN** the script runs on OpenWRT with opkg
 - **THEN** it runs `opkg install git python3 python3-pip`
