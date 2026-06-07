@@ -73,10 +73,10 @@ class TestRunScript:
     """Tests for _run_script()."""
 
     def test_executable_script_runs_successfully(
-        self, assessed_master: Callable[[str], Path]
+        self, script_factory: Callable[[str], Path]
     ) -> None:
         """An executable script is invoked via OS execution without error."""
-        _run_script(assessed_master("#!/bin/sh\nexit 0\n"))
+        _run_script(script_factory("#!/bin/sh\nexit 0\n"))
 
     def test_non_executable_script_raises_permission_error(
         self, tmp_path: Path
@@ -89,11 +89,11 @@ class TestRunScript:
             _run_script(script)
 
     def test_script_with_nonzero_exit_raises_called_process_error(
-        self, assessed_master: Callable[[str], Path]
+        self, script_factory: Callable[[str], Path]
     ) -> None:
         """A script that exits with a non-zero status raises CalledProcessError."""
         with pytest.raises(subprocess.CalledProcessError):
-            _run_script(assessed_master("#!/bin/sh\nexit 1\n"))
+            _run_script(script_factory("#!/bin/sh\nexit 1\n"))
 
 
 class TestIsScriptsOnly:

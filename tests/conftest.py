@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture(scope="session")
-def assessed_master(
+def script_factory(
     tmp_path_factory: pytest.TempPathFactory,
 ) -> Callable[[str], Path]:
     """Return a factory that yields pre-assessed executable stub files.

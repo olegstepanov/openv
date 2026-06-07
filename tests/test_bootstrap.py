@@ -28,21 +28,21 @@ class TestBootstrapTemplate:
             subprocess.run(["sh", "-n", str(path)], check=True)  # noqa: S603, S607
 
     def test_root_install_does_not_require_sudo(
-        self, tmp_path: Path, assessed_master: Callable[[str], Path]
+        self, tmp_path: Path, script_factory: Callable[[str], Path]
     ) -> None:
         """Root environments install prerequisites without sudo."""
-        result, log = _run_bootstrap(tmp_path, assessed_master, user_id=0)
+        result, log = _run_bootstrap(tmp_path, script_factory, user_id=0)
 
         assert result.returncode == 0
         assert "apt-get update -y" in log
         assert "apt-get install -y git python3 python3-pip" in log
 
     def test_root_openwrt_install_does_not_require_sudo(
-        self, tmp_path: Path, assessed_master: Callable[[str], Path]
+        self, tmp_path: Path, script_factory: Callable[[str], Path]
     ) -> None:
         """Root OpenWRT environments install prerequisites without sudo."""
         result, log = _run_bootstrap(
-            tmp_path, assessed_master, user_id=0, package_manager="opkg"
+            tmp_path, script_factory, user_id=0, package_manager="opkg"
         )
 
         assert result.returncode == 0
@@ -50,11 +50,11 @@ class TestBootstrapTemplate:
         assert "opkg install git python3 python3-pip" in log
 
     def test_homebrew_install_does_not_require_sudo(
-        self, tmp_path: Path, assessed_master: Callable[[str], Path]
+        self, tmp_path: Path, script_factory: Callable[[str], Path]
     ) -> None:
         """Homebrew environments install prerequisites without sudo."""
         result, log = _run_bootstrap(
-            tmp_path, assessed_master, user_id=1000, package_manager="brew"
+            tmp_path, script_factory, user_id=1000, package_manager="brew"
         )
 
         assert result.returncode == 0
@@ -62,12 +62,12 @@ class TestBootstrapTemplate:
         assert "brew install git python3" in log
 
     def test_macos_without_package_manager_installs_homebrew(
-        self, tmp_path: Path, assessed_master: Callable[[str], Path]
+        self, tmp_path: Path, script_factory: Callable[[str], Path]
     ) -> None:
         """Darwin environments without brew install Homebrew before prerequisites."""
         result, log = _run_bootstrap(
             tmp_path,
-            assessed_master,
+            script_factory,
             user_id=1000,
             package_manager=None,
             uname_system="Darwin",
@@ -79,11 +79,11 @@ class TestBootstrapTemplate:
         assert log.index("homebrew installer") < log.index("brew install git python3")
 
     def test_non_root_install_uses_sudo_when_available(
-        self, tmp_path: Path, assessed_master: Callable[[str], Path]
+        self, tmp_path: Path, script_factory: Callable[[str], Path]
     ) -> None:
         """Non-root environments delegate privileged commands to sudo."""
         result, log = _run_bootstrap(
-            tmp_path, assessed_master, user_id=1000, include_sudo=True
+            tmp_path, script_factory, user_id=1000, include_sudo=True
         )
 
         assert result.returncode == 0
@@ -91,10 +91,10 @@ class TestBootstrapTemplate:
         assert "sudo apt-get install -y git python3 python3-pip" in log
 
     def test_non_root_install_fails_clearly_without_sudo(
-        self, tmp_path: Path, assessed_master: Callable[[str], Path]
+        self, tmp_path: Path, script_factory: Callable[[str], Path]
     ) -> None:
         """Non-root environments without sudo report how to proceed."""
-        result, log = _run_bootstrap(tmp_path, assessed_master, user_id=1000)
+        result, log = _run_bootstrap(tmp_path, script_factory, user_id=1000)
 
         assert result.returncode == 1
         assert log == ""
@@ -137,11 +137,11 @@ class TestBootstrapTemplate:
         assert "{{OPENV_VERSION}}" not in output
 
     def test_missing_package_manager_reports_error_on_stderr(
-        self, tmp_path: Path, assessed_master: Callable[[str], Path]
+        self, tmp_path: Path, script_factory: Callable[[str], Path]
     ) -> None:
         """Absent package managers fail with the error directed to stderr."""
         result, _ = _run_bootstrap(
-            tmp_path, assessed_master, user_id=1000, package_manager=None
+            tmp_path, script_factory, user_id=1000, package_manager=None
         )
 
         assert result.returncode != 0
@@ -150,13 +150,13 @@ class TestBootstrapTemplate:
         ) in result.stderr
 
     def test_existing_openv_directory_reports_error_on_stderr(
-        self, tmp_path: Path, assessed_master: Callable[[str], Path]
+        self, tmp_path: Path, script_factory: Callable[[str], Path]
     ) -> None:
         """An existing $HOME/.openv fails with the error directed to stderr."""
         home_dir = tmp_path / "home"
         (home_dir / ".openv").mkdir(parents=True)
 
-        result, _ = _run_bootstrap(tmp_path, assessed_master, user_id=0)
+        result, _ = _run_bootstrap(tmp_path, script_factory, user_id=0)
 
         assert result.returncode != 0
         assert (
