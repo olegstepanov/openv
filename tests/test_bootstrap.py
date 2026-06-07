@@ -90,6 +90,32 @@ class TestBootstrapTemplate:
         assert result.stdout == dotfiles_url
         assert not marker.exists()
 
+    def test_missing_package_manager_reports_error_on_stderr(
+        self, tmp_path: Path
+    ) -> None:
+        """Absent package managers fail with the error directed to stderr."""
+        result, _ = _run_bootstrap(tmp_path, user_id=1000, package_manager=None)
+
+        assert result.returncode != 0
+        assert (
+            "ERROR: No supported package manager found (brew, apt-get, opkg)."
+        ) in result.stderr
+
+    def test_existing_openv_directory_reports_error_on_stderr(
+        self, tmp_path: Path
+    ) -> None:
+        """An existing $HOME/.openv fails with the error directed to stderr."""
+        home_dir = tmp_path / "home"
+        (home_dir / ".openv").mkdir(parents=True)
+
+        result, _ = _run_bootstrap(tmp_path, user_id=0)
+
+        assert result.returncode != 0
+        assert (
+            f"ERROR: {home_dir}/.openv already exists. "
+            "Remove it before running bootstrap."
+        ) in result.stderr
+
     def test_installs_openv_before_cloning_dotfiles(self) -> None:
         """Bootstrap installs pinned openv before cloning the dotfiles repository."""
         template = (
@@ -108,7 +134,7 @@ def _run_bootstrap(
     *,
     user_id: int,
     include_sudo: bool = False,
-    package_manager: str = "apt-get",
+    package_manager: str | None = "apt-get",
 ) -> tuple[subprocess.CompletedProcess[str], str]:
     """Execute the template against package-manager and install command stubs."""
     bin_dir = tmp_path / "bin"
@@ -116,9 +142,10 @@ def _run_bootstrap(
     log_path = tmp_path / "commands.log"
 
     _write_stub(bin_dir, "id", f'echo "{user_id}"\n')
-    _write_stub(
-        bin_dir, package_manager, f'echo "{package_manager} $*" >> "{log_path}"\n'
-    )
+    if package_manager is not None:
+        _write_stub(
+            bin_dir, package_manager, f'echo "{package_manager} $*" >> "{log_path}"\n'
+        )
     _write_stub(bin_dir, "git", f'echo "git $*" >> "{log_path}"\n')
     _write_stub(bin_dir, "pip3", f'echo "pip3 $*" >> "{log_path}"\n')
     _write_stub(bin_dir, "openv", f'echo "openv $*" >> "{log_path}"\n')
