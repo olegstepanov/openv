@@ -63,7 +63,7 @@ class TestInstallIntegration:
         mock_install_package.assert_called_once_with(PackageManager.BREW, "zsh")
 
     def test_install_resolves_dependency_order_and_symlinks(
-        self, tmp_path: Path, assessed_master: Callable[[str], Path]
+        self, tmp_path: Path, script_factory: Callable[[str], Path]
     ) -> None:
         """A real discovery → dependency-resolution → stow chain runs end to end.
 
@@ -87,7 +87,7 @@ class TestInstallIntegration:
         bar_config = bar_dir / ".barrc"
         bar_config.write_text("# barrc\n")
         bar_install_script = bar_dir / "install.sh"
-        bar_install_script.symlink_to(assessed_master("#!/usr/bin/env bash\nexit 0\n"))
+        bar_install_script.symlink_to(script_factory("#!/usr/bin/env bash\nexit 0\n"))
 
         with (
             patch("openv.cli.Path.home", return_value=home),
