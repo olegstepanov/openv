@@ -7,13 +7,15 @@ import subprocess
 from typing import TYPE_CHECKING
 from unittest.mock import patch
 
+import pytest
+
 from openv.cli import _cmd_generate_bootstrap
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
-    import pytest
+    RunBootstrap = Callable[..., tuple[subprocess.CompletedProcess[str], str]]
 
 
 class TestBootstrapTemplate:
@@ -28,46 +30,40 @@ class TestBootstrapTemplate:
             subprocess.run(["sh", "-n", str(path)], check=True)  # noqa: S603, S607
 
     def test_root_install_does_not_require_sudo(
-        self, tmp_path: Path, script_factory: Callable[[str], Path]
+        self, run_bootstrap: RunBootstrap
     ) -> None:
         """Root environments install prerequisites without sudo."""
-        result, log = _run_bootstrap(tmp_path, script_factory, user_id=0)
+        result, log = run_bootstrap(user_id=0)
 
         assert result.returncode == 0
         assert "apt-get update -y" in log
         assert "apt-get install -y git python3 python3-pip" in log
 
     def test_root_openwrt_install_does_not_require_sudo(
-        self, tmp_path: Path, script_factory: Callable[[str], Path]
+        self, run_bootstrap: RunBootstrap
     ) -> None:
         """Root OpenWRT environments install prerequisites without sudo."""
-        result, log = _run_bootstrap(
-            tmp_path, script_factory, user_id=0, package_manager="opkg"
-        )
+        result, log = run_bootstrap(user_id=0, package_manager="opkg")
 
         assert result.returncode == 0
         assert "opkg update" in log
         assert "opkg install git python3 python3-pip" in log
 
     def test_homebrew_install_does_not_require_sudo(
-        self, tmp_path: Path, script_factory: Callable[[str], Path]
+        self, run_bootstrap: RunBootstrap
     ) -> None:
         """Homebrew environments install prerequisites without sudo."""
-        result, log = _run_bootstrap(
-            tmp_path, script_factory, user_id=1000, package_manager="brew"
-        )
+        result, log = run_bootstrap(user_id=1000, package_manager="brew")
 
         assert result.returncode == 0
         assert "homebrew installer" not in log
         assert "brew install git python3" in log
 
     def test_macos_without_package_manager_installs_homebrew(
-        self, tmp_path: Path, script_factory: Callable[[str], Path]
+        self, run_bootstrap: RunBootstrap
     ) -> None:
         """Darwin environments without brew install Homebrew before prerequisites."""
-        result, log = _run_bootstrap(
-            tmp_path,
-            script_factory,
+        result, log = run_bootstrap(
             user_id=1000,
             package_manager=None,
             uname_system="Darwin",
@@ -79,22 +75,20 @@ class TestBootstrapTemplate:
         assert log.index("homebrew installer") < log.index("brew install git python3")
 
     def test_non_root_install_uses_sudo_when_available(
-        self, tmp_path: Path, script_factory: Callable[[str], Path]
+        self, run_bootstrap: RunBootstrap
     ) -> None:
         """Non-root environments delegate privileged commands to sudo."""
-        result, log = _run_bootstrap(
-            tmp_path, script_factory, user_id=1000, include_sudo=True
-        )
+        result, log = run_bootstrap(user_id=1000, include_sudo=True)
 
         assert result.returncode == 0
         assert "sudo apt-get update -y" in log
         assert "sudo apt-get install -y git python3 python3-pip" in log
 
     def test_non_root_install_fails_clearly_without_sudo(
-        self, tmp_path: Path, script_factory: Callable[[str], Path]
+        self, run_bootstrap: RunBootstrap
     ) -> None:
         """Non-root environments without sudo report how to proceed."""
-        result, log = _run_bootstrap(tmp_path, script_factory, user_id=1000)
+        result, log = run_bootstrap(user_id=1000)
 
         assert result.returncode == 1
         assert log == ""
@@ -137,12 +131,10 @@ class TestBootstrapTemplate:
         assert "{{OPENV_VERSION}}" not in output
 
     def test_missing_package_manager_reports_error_on_stderr(
-        self, tmp_path: Path, script_factory: Callable[[str], Path]
+        self, run_bootstrap: RunBootstrap
     ) -> None:
         """Absent package managers fail with the error directed to stderr."""
-        result, _ = _run_bootstrap(
-            tmp_path, script_factory, user_id=1000, package_manager=None
-        )
+        result, _ = run_bootstrap(user_id=1000, package_manager=None)
 
         assert result.returncode != 0
         assert (
@@ -150,13 +142,13 @@ class TestBootstrapTemplate:
         ) in result.stderr
 
     def test_existing_openv_directory_reports_error_on_stderr(
-        self, tmp_path: Path, script_factory: Callable[[str], Path]
+        self, tmp_path: Path, run_bootstrap: RunBootstrap
     ) -> None:
         """An existing $HOME/.openv fails with the error directed to stderr."""
         home_dir = tmp_path / "home"
         (home_dir / ".openv").mkdir(parents=True)
 
-        result, _ = _run_bootstrap(tmp_path, script_factory, user_id=0)
+        result, _ = run_bootstrap(user_id=0)
 
         assert result.returncode != 0
         assert (
@@ -177,66 +169,76 @@ class TestBootstrapTemplate:
         )
 
 
-def _run_bootstrap(
-    tmp_path: Path,
-    script_factory: Callable[[str], Path],
-    *,
-    user_id: int,
-    include_sudo: bool = False,
-    package_manager: str | None = "apt-get",
-    uname_system: str | None = None,
-    include_homebrew_installer: bool = False,
-) -> tuple[subprocess.CompletedProcess[str], str]:
+@pytest.fixture
+def run_bootstrap(
+    tmp_path: Path, script_factory: Callable[[str], Path]
+) -> RunBootstrap:
     """Execute the template against package-manager and install command stubs."""
-    bin_dir = tmp_path / "bin"
-    bin_dir.mkdir()
-    log_path = tmp_path / "commands.log"
 
-    logger = script_factory('#!/bin/sh\necho "${0##*/} $*" >> "$STUB_LOG"\n')
-    (bin_dir / "id").symlink_to(script_factory('#!/bin/sh\necho "${STUB_UID:-0}"\n'))
-    (bin_dir / "git").symlink_to(logger)
-    (bin_dir / "pip3").symlink_to(logger)
-    (bin_dir / "openv").symlink_to(logger)
-    if uname_system is not None:
-        (bin_dir / "uname").symlink_to(
-            script_factory('#!/bin/sh\necho "${STUB_UNAME:-Linux}"\n')
-        )
-    if package_manager is not None:
-        (bin_dir / package_manager).symlink_to(logger)
-    if include_sudo:
-        (bin_dir / "sudo").symlink_to(
-            script_factory('#!/bin/sh\necho "sudo $*" >> "$STUB_LOG"\nexec "$@"\n')
-        )
+    def _execute(
+        *,
+        user_id: int,
+        include_sudo: bool = False,
+        package_manager: str | None = "apt-get",
+        uname_system: str | None = None,
+        include_homebrew_installer: bool = False,
+    ) -> tuple[subprocess.CompletedProcess[str], str]:
+        """Execute the bootstrap template with the given parameters."""
+        bin_dir = tmp_path / "bin"
+        bin_dir.mkdir()
+        log_path = tmp_path / "commands.log"
 
-    env = {
-        "HOME": str(tmp_path / "home"),
-        "PATH": str(bin_dir),
-        "STUB_LOG": str(log_path),
-        "STUB_UID": str(user_id),
-    }
-    if uname_system is not None:
-        env["STUB_UNAME"] = uname_system
-    if include_homebrew_installer:
-        (bin_dir / "curl").symlink_to(
-            script_factory(
-                "#!/bin/sh\n"
-                "printf '%s\\n' "
-                '\'echo "homebrew installer" >> "$STUB_LOG"\' '
-                '\'/bin/ln -s "$STUB_BREW_MASTER" "$STUB_BIN/brew"\'\n'
+        logger = script_factory('#!/bin/sh\necho "${0##*/} $*" >> "$STUB_LOG"\n')
+        (bin_dir / "id").symlink_to(
+            script_factory('#!/bin/sh\necho "${STUB_UID:-0}"\n')
+        )
+        (bin_dir / "git").symlink_to(logger)
+        (bin_dir / "pip3").symlink_to(logger)
+        (bin_dir / "openv").symlink_to(logger)
+        if uname_system is not None:
+            (bin_dir / "uname").symlink_to(
+                script_factory('#!/bin/sh\necho "${STUB_UNAME:-Linux}"\n')
             )
-        )
-        env["STUB_BIN"] = str(bin_dir)
-        env["STUB_BREW_MASTER"] = str(logger)
+        if package_manager is not None:
+            (bin_dir / package_manager).symlink_to(logger)
+        if include_sudo:
+            (bin_dir / "sudo").symlink_to(
+                script_factory('#!/bin/sh\necho "sudo $*" >> "$STUB_LOG"\nexec "$@"\n')
+            )
 
-    template_ref = importlib.resources.files("openv").joinpath("bootstrap.sh.template")
-    with importlib.resources.as_file(template_ref) as path:
-        result = subprocess.run(  # noqa: S603
-            ["/bin/sh", str(path)],
-            check=False,
-            capture_output=True,
-            env=env,
-            text=True,
-        )
+        env = {
+            "HOME": str(tmp_path / "home"),
+            "PATH": str(bin_dir),
+            "STUB_LOG": str(log_path),
+            "STUB_UID": str(user_id),
+        }
+        if uname_system is not None:
+            env["STUB_UNAME"] = uname_system
+        if include_homebrew_installer:
+            (bin_dir / "curl").symlink_to(
+                script_factory(
+                    "#!/bin/sh\n"
+                    "printf '%s\\n' "
+                    '\'echo "homebrew installer" >> "$STUB_LOG"\' '
+                    '\'/bin/ln -s "$STUB_BREW_MASTER" "$STUB_BIN/brew"\'\n'
+                )
+            )
+            env["STUB_BIN"] = str(bin_dir)
+            env["STUB_BREW_MASTER"] = str(logger)
 
-    log = log_path.read_text() if log_path.exists() else ""
-    return result, log
+        template_ref = importlib.resources.files("openv").joinpath(
+            "bootstrap.sh.template"
+        )
+        with importlib.resources.as_file(template_ref) as path:
+            result = subprocess.run(  # noqa: S603
+                ["/bin/sh", str(path)],
+                check=False,
+                capture_output=True,
+                env=env,
+                text=True,
+            )
+
+        log = log_path.read_text() if log_path.exists() else ""
+        return result, log
+
+    return _execute
