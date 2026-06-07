@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import importlib.resources
-import stat
 import subprocess
 from typing import TYPE_CHECKING
 from unittest.mock import patch
@@ -11,6 +10,7 @@ from unittest.mock import patch
 from openv.cli import _cmd_generate_bootstrap
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from pathlib import Path
 
     import pytest
@@ -27,36 +27,47 @@ class TestBootstrapTemplate:
         with importlib.resources.as_file(template_ref) as path:
             subprocess.run(["sh", "-n", str(path)], check=True)  # noqa: S603, S607
 
-    def test_root_install_does_not_require_sudo(self, tmp_path: Path) -> None:
+    def test_root_install_does_not_require_sudo(
+        self, tmp_path: Path, assessed_master: Callable[[str], Path]
+    ) -> None:
         """Root environments install prerequisites without sudo."""
-        result, log = _run_bootstrap(tmp_path, user_id=0)
+        result, log = _run_bootstrap(tmp_path, assessed_master, user_id=0)
 
         assert result.returncode == 0
         assert "apt-get update -y" in log
         assert "apt-get install -y git python3 python3-pip" in log
 
-    def test_root_openwrt_install_does_not_require_sudo(self, tmp_path: Path) -> None:
+    def test_root_openwrt_install_does_not_require_sudo(
+        self, tmp_path: Path, assessed_master: Callable[[str], Path]
+    ) -> None:
         """Root OpenWRT environments install prerequisites without sudo."""
-        result, log = _run_bootstrap(tmp_path, user_id=0, package_manager="opkg")
+        result, log = _run_bootstrap(
+            tmp_path, assessed_master, user_id=0, package_manager="opkg"
+        )
 
         assert result.returncode == 0
         assert "opkg update" in log
         assert "opkg install git python3 python3-pip" in log
 
-    def test_homebrew_install_does_not_require_sudo(self, tmp_path: Path) -> None:
+    def test_homebrew_install_does_not_require_sudo(
+        self, tmp_path: Path, assessed_master: Callable[[str], Path]
+    ) -> None:
         """Homebrew environments install prerequisites without sudo."""
-        result, log = _run_bootstrap(tmp_path, user_id=1000, package_manager="brew")
+        result, log = _run_bootstrap(
+            tmp_path, assessed_master, user_id=1000, package_manager="brew"
+        )
 
         assert result.returncode == 0
         assert "homebrew installer" not in log
         assert "brew install git python3" in log
 
     def test_macos_without_package_manager_installs_homebrew(
-        self, tmp_path: Path
+        self, tmp_path: Path, assessed_master: Callable[[str], Path]
     ) -> None:
         """Darwin environments without brew install Homebrew before prerequisites."""
         result, log = _run_bootstrap(
             tmp_path,
+            assessed_master,
             user_id=1000,
             package_manager=None,
             uname_system="Darwin",
@@ -67,17 +78,23 @@ class TestBootstrapTemplate:
         assert "homebrew installer" in log
         assert log.index("homebrew installer") < log.index("brew install git python3")
 
-    def test_non_root_install_uses_sudo_when_available(self, tmp_path: Path) -> None:
+    def test_non_root_install_uses_sudo_when_available(
+        self, tmp_path: Path, assessed_master: Callable[[str], Path]
+    ) -> None:
         """Non-root environments delegate privileged commands to sudo."""
-        result, log = _run_bootstrap(tmp_path, user_id=1000, include_sudo=True)
+        result, log = _run_bootstrap(
+            tmp_path, assessed_master, user_id=1000, include_sudo=True
+        )
 
         assert result.returncode == 0
         assert "sudo apt-get update -y" in log
         assert "sudo apt-get install -y git python3 python3-pip" in log
 
-    def test_non_root_install_fails_clearly_without_sudo(self, tmp_path: Path) -> None:
+    def test_non_root_install_fails_clearly_without_sudo(
+        self, tmp_path: Path, assessed_master: Callable[[str], Path]
+    ) -> None:
         """Non-root environments without sudo report how to proceed."""
-        result, log = _run_bootstrap(tmp_path, user_id=1000)
+        result, log = _run_bootstrap(tmp_path, assessed_master, user_id=1000)
 
         assert result.returncode == 1
         assert log == ""
@@ -120,10 +137,12 @@ class TestBootstrapTemplate:
         assert "{{OPENV_VERSION}}" not in output
 
     def test_missing_package_manager_reports_error_on_stderr(
-        self, tmp_path: Path
+        self, tmp_path: Path, assessed_master: Callable[[str], Path]
     ) -> None:
         """Absent package managers fail with the error directed to stderr."""
-        result, _ = _run_bootstrap(tmp_path, user_id=1000, package_manager=None)
+        result, _ = _run_bootstrap(
+            tmp_path, assessed_master, user_id=1000, package_manager=None
+        )
 
         assert result.returncode != 0
         assert (
@@ -131,13 +150,13 @@ class TestBootstrapTemplate:
         ) in result.stderr
 
     def test_existing_openv_directory_reports_error_on_stderr(
-        self, tmp_path: Path
+        self, tmp_path: Path, assessed_master: Callable[[str], Path]
     ) -> None:
         """An existing $HOME/.openv fails with the error directed to stderr."""
         home_dir = tmp_path / "home"
         (home_dir / ".openv").mkdir(parents=True)
 
-        result, _ = _run_bootstrap(tmp_path, user_id=0)
+        result, _ = _run_bootstrap(tmp_path, assessed_master, user_id=0)
 
         assert result.returncode != 0
         assert (
@@ -158,8 +177,31 @@ class TestBootstrapTemplate:
         )
 
 
+# Stub command bodies, kept identical across tests so each is assessed once per
+# session (see the ``assessed_master`` fixture in conftest.py). Per-test data is
+# passed through the STUB_* environment variables rather than baked into the body.
+# The generic logger derives the invoked command name from ``$0`` via POSIX
+# parameter expansion (``${0##*/}``), so a single master can stand in for git,
+# pip3, the package managers, etc. without needing basename on the restricted PATH.
+_LOGGER_STUB = '#!/bin/sh\necho "${0##*/} $*" >> "$STUB_LOG"\n'
+_ID_STUB = '#!/bin/sh\necho "${STUB_UID:-0}"\n'
+_UNAME_STUB = '#!/bin/sh\necho "${STUB_UNAME:-Linux}"\n'
+_SUDO_STUB = '#!/bin/sh\necho "sudo $*" >> "$STUB_LOG"\nexec "$@"\n'
+# curl emits a Homebrew installer that logs and creates ``brew`` as a symlink to a
+# pre-assessed master (rather than write+chmod, which would re-incur the macOS
+# first-exec penalty). It uses absolute /bin/ln since only the stub bin dir is on
+# PATH, and relies on the STUB_* variables inherited by the installer's shell.
+_CURL_STUB = (
+    "#!/bin/sh\n"
+    "printf '%s\\n' "
+    '\'echo "homebrew installer" >> "$STUB_LOG"\' '
+    '\'/bin/ln -s "$STUB_BREW_MASTER" "$STUB_BIN/brew"\'\n'
+)
+
+
 def _run_bootstrap(
     tmp_path: Path,
+    assessed_master: Callable[[str], Path],
     *,
     user_id: int,
     include_sudo: bool = False,
@@ -172,24 +214,30 @@ def _run_bootstrap(
     bin_dir.mkdir()
     log_path = tmp_path / "commands.log"
 
-    _write_stub(bin_dir, "id", f'echo "{user_id}"\n')
+    logger = assessed_master(_LOGGER_STUB)
+    (bin_dir / "id").symlink_to(assessed_master(_ID_STUB))
+    (bin_dir / "git").symlink_to(logger)
+    (bin_dir / "pip3").symlink_to(logger)
+    (bin_dir / "openv").symlink_to(logger)
     if uname_system is not None:
-        _write_stub(bin_dir, "uname", f'echo "{uname_system}"\n')
+        (bin_dir / "uname").symlink_to(assessed_master(_UNAME_STUB))
     if package_manager is not None:
-        _write_stub(
-            bin_dir, package_manager, f'echo "{package_manager} $*" >> "{log_path}"\n'
-        )
-    if include_homebrew_installer:
-        _write_homebrew_installer_stub(bin_dir, log_path)
-    _write_stub(bin_dir, "git", f'echo "git $*" >> "{log_path}"\n')
-    _write_stub(bin_dir, "pip3", f'echo "pip3 $*" >> "{log_path}"\n')
-    _write_stub(bin_dir, "openv", f'echo "openv $*" >> "{log_path}"\n')
+        (bin_dir / package_manager).symlink_to(logger)
     if include_sudo:
-        _write_stub(
-            bin_dir,
-            "sudo",
-            f'echo "sudo $*" >> "{log_path}"\nexec "$@"\n',
-        )
+        (bin_dir / "sudo").symlink_to(assessed_master(_SUDO_STUB))
+
+    env = {
+        "HOME": str(tmp_path / "home"),
+        "PATH": str(bin_dir),
+        "STUB_LOG": str(log_path),
+        "STUB_UID": str(user_id),
+    }
+    if uname_system is not None:
+        env["STUB_UNAME"] = uname_system
+    if include_homebrew_installer:
+        (bin_dir / "curl").symlink_to(assessed_master(_CURL_STUB))
+        env["STUB_BIN"] = str(bin_dir)
+        env["STUB_BREW_MASTER"] = str(logger)
 
     template_ref = importlib.resources.files("openv").joinpath("bootstrap.sh.template")
     with importlib.resources.as_file(template_ref) as path:
@@ -197,28 +245,9 @@ def _run_bootstrap(
             ["/bin/sh", str(path)],
             check=False,
             capture_output=True,
-            env={"HOME": str(tmp_path / "home"), "PATH": str(bin_dir)},
+            env=env,
             text=True,
         )
 
     log = log_path.read_text() if log_path.exists() else ""
     return result, log
-
-
-def _write_stub(bin_dir: Path, name: str, body: str) -> None:
-    """Create an executable shell command stub."""
-    path = bin_dir / name
-    path.write_text(f"#!/bin/sh\n{body}")
-    path.chmod(path.stat().st_mode | stat.S_IXUSR)
-
-
-def _write_homebrew_installer_stub(bin_dir: Path, log_path: Path) -> None:
-    """Create a curl stub that emits a fake Homebrew installer."""
-    brew_path = bin_dir / "brew"
-    installer = f"""#!/bin/sh
-echo "homebrew installer" >> "{log_path}"
-printf '%s\\n' '#!/bin/sh' 'echo "brew $*" >> "{log_path}"' > "{brew_path}"
-/bin/chmod +x "{brew_path}"
-"""
-    escaped_installer = installer.replace("'", "'\"'\"'")
-    _write_stub(bin_dir, "curl", f"printf '%s' '{escaped_installer}'\n")
