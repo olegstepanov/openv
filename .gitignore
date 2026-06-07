@@ -1,5 +1,9 @@
-.claude/worktrees/
+# Python
+__pycache__/
 
+# Local overrides
 *.local.md
 
-__pycache__/
+# Tooling
+.claude/worktrees/
+.omx/
