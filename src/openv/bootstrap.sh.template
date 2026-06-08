@@ -85,6 +85,14 @@ install_openv() {
     openv install
 }
 
+printf '%s\n' \
+'  ____  ____  ___  ____ _   __' \
+' / __ \/ __ \/ _ \/ __ \ | / /' \
+'/ /_/ / /_/ /  __/ / / / |/ /' \
+'\____/ .___/\___/_/ /_/|___/' \
+'    /_/' \
+' Oleg'\''s Portable Environment' >&2
+
 PKG_MANAGER=$(detect_pkg_manager)
 
 if [ -z "$PKG_MANAGER" ] && [ "$(uname -s)" = "Darwin" ]; then

@@ -1,3 +1,12 @@
+```
+  ____  ____  ___  ____ _   __
+ / __ \/ __ \/ _ \/ __ \ | / /
+/ /_/ / /_/ /  __/ / / / |/ /
+\____/ .___/\___/_/ /_/|___/
+    /_/
+ Oleg's Portable Environment
+```
+
 # openv
 
 **Oleg's Portable Environment** — bootstrap a personal UNIX environment on a new
