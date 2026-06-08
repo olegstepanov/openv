@@ -7,3 +7,9 @@ __pycache__/
 # Tooling
 .claude/worktrees/
 .omx/
+
+# Local environment (may contain security tokens)
+.env
+
+# MCP files
+.mcp.json
