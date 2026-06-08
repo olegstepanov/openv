@@ -1,7 +1,7 @@
 # openv
 
 **Oleg's Portable Environment** — bootstrap a personal UNIX environment on a new
-machine from a dotfiles repository.
+machine from a dotfiles repository, packages, and custom install scripts.
 
 > ⚠️ **Status: raw, pre-alpha.** This is a personal project under active,
 > early development. The CLI, the dotfiles format, and the bootstrap flow may
