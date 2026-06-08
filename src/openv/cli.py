@@ -10,6 +10,15 @@ from .discovery import discover
 from .installer import install_tools
 from .selector import select_tools
 
+LOGO = r"""
+  ____  ____  ___  ____ _   __
+ / __ \/ __ \/ _ \/ __ \ | / /
+/ /_/ / /_/ /  __/ / / / |/ /
+\____/ .___/\___/_/ /_/|___/
+    /_/
+ Oleg's Portable Environment
+"""
+
 
 class _Args(argparse.Namespace):
     command: str = ""
@@ -20,6 +29,7 @@ class _Args(argparse.Namespace):
 
 def _cmd_install(dotfiles: Path, force: bool, tool_names: list[str]) -> None:
     """Discover, select, and install tools from a dotfiles repository."""
+    print(LOGO)
     home = Path.home()
 
     tools = discover(dotfiles)
