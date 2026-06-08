@@ -12,7 +12,7 @@ machine from a dotfiles repository.
 
 Point openv at a dotfiles repository and it discovers the tools you keep there,
 installs their system packages, links their config files into your home
-directory, and runs their install scripts.
+directory, and runs their custom pre- and post-install scripts.
 
 ## Usage
 
@@ -56,18 +56,6 @@ directory:
   directory.
 
 The default dotfiles root is `~/.openv`.
-
-## Installation
-
-openv is not on PyPI yet. Install it from source:
-
-```sh
-git clone https://github.com/olegstepanov/openv.git
-cd openv
-make setup     # see Makefile
-```
-
-Once published, `pip install openv` will be the intended distribution method.
 
 ## Development
 
